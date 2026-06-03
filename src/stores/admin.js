@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { useAuthStore } from './auth'
 
-const API = import.meta.env.VITE_API_URL
+const API = import.meta.env.VITE_API_URL || '/api'
 
 export const useAdminStore = defineStore('admin', () => {
   const auth = useAuthStore()
