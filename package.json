@@ -1,6 +1,6 @@
 {
   "name": "whatservices-admin",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "scripts": {
     "dev": "vite --port 5174",
     "build": "vite build",
