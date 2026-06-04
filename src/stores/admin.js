@@ -126,6 +126,12 @@ export const useAdminStore = defineStore('admin', () => {
     return res.json()
   }
 
+  // ----- Dashboard -----
+  const fetchStats = async () => {
+    const res = await auth.authFetch(`${API}/admin/stats`)
+    return res.json()
+  }
+
   // ----- Config del bot -----
   const fetchBotConfig = async () => {
     const res = await auth.authFetch(`${API}/admin/bot-config`)
@@ -149,5 +155,6 @@ export const useAdminStore = defineStore('admin', () => {
     fetchInstances, createInstance, connectInstance, instanceState,
     logoutInstance, deleteInstance, setActiveInstance,
     fetchBotConfig, updateBotConfig,
+    fetchStats,
   }
 })
