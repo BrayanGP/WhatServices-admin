@@ -16,6 +16,18 @@ server {
         proxy_set_header Connection "";
     }
 
+    # Assets con hash: cache largo. Si no existe, 404 limpio (no index.html)
+    location /assets/ {
+        try_files $uri =404;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    # index.html nunca se cachea: siempre referencia los chunks actuales
+    location = /index.html {
+        add_header Cache-Control "no-cache, no-store, must-revalidate";
+    }
+
     location / {
         try_files $uri $uri/ /index.html;
     }
