@@ -11,6 +11,7 @@ const links = [
   { to: '/users', label: 'Usuarios', icon: '👥' },
   { to: '/conversations', label: 'Conversaciones', icon: '💬' },
   { to: '/whatsapp', label: 'WhatsApp', icon: '📱' },
+  { to: '/bot', label: 'Bot', icon: '🤖' },
   { to: '/subscriptions', label: 'Suscripciones', icon: '💳' },
   { to: '/categories', label: 'Categorías', icon: '🗂️' },
   { to: '/settings', label: 'Configuración', icon: '⚙️' },

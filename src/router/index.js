@@ -10,6 +10,7 @@ const routes = [
   { path: '/categories', component: () => import('../views/CategoriesView.vue'), meta: { requiresAuth: true } },
   { path: '/conversations', component: () => import('../views/ConversationsView.vue'), meta: { requiresAuth: true } },
   { path: '/whatsapp', component: () => import('../views/WhatsAppView.vue'), meta: { requiresAuth: true } },
+  { path: '/bot', component: () => import('../views/BotConfigView.vue'), meta: { requiresAuth: true } },
   { path: '/settings', component: () => import('../views/SettingsView.vue'), meta: { requiresAuth: true } },
 ]
 

@@ -126,6 +126,21 @@ export const useAdminStore = defineStore('admin', () => {
     return res.json()
   }
 
+  // ----- Config del bot -----
+  const fetchBotConfig = async () => {
+    const res = await auth.authFetch(`${API}/admin/bot-config`)
+    return res.json()
+  }
+
+  const updateBotConfig = async (data) => {
+    const res = await auth.authFetch(`${API}/admin/bot-config`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    })
+    return res.json()
+  }
+
   return {
     fetchProviders, toggleVerify, toggleBlockProvider,
     fetchUsers, toggleBlockUser,
@@ -133,5 +148,6 @@ export const useAdminStore = defineStore('admin', () => {
     fetchConversations, fetchConversation, toggleTakeover, replyConversation,
     fetchInstances, createInstance, connectInstance, instanceState,
     logoutInstance, deleteInstance, setActiveInstance,
+    fetchBotConfig, updateBotConfig,
   }
 })
