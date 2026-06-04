@@ -126,6 +126,27 @@ export const useAdminStore = defineStore('admin', () => {
     return res.json()
   }
 
+  // ----- Solicitudes -----
+  const fetchRequests = async (params = {}) => {
+    const q = new URLSearchParams(params).toString()
+    const res = await auth.authFetch(`${API}/admin/requests?${q}`)
+    return res.json()
+  }
+
+  const fetchRequest = async (id) => {
+    const res = await auth.authFetch(`${API}/admin/requests/${id}`)
+    return res.json()
+  }
+
+  const updateRequest = async (id, data) => {
+    const res = await auth.authFetch(`${API}/admin/requests/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    })
+    return res.json()
+  }
+
   // ----- Dashboard -----
   const fetchStats = async () => {
     const res = await auth.authFetch(`${API}/admin/stats`)
@@ -156,5 +177,6 @@ export const useAdminStore = defineStore('admin', () => {
     logoutInstance, deleteInstance, setActiveInstance,
     fetchBotConfig, updateBotConfig,
     fetchStats,
+    fetchRequests, fetchRequest, updateRequest,
   }
 })

@@ -10,6 +10,7 @@ const links = [
   { to: '/providers', label: 'Proveedores', icon: '🔧' },
   { to: '/users', label: 'Usuarios', icon: '👥' },
   { to: '/conversations', label: 'Conversaciones', icon: '💬' },
+  { to: '/requests', label: 'Solicitudes', icon: '📋' },
   { to: '/whatsapp', label: 'WhatsApp', icon: '📱' },
   { to: '/bot', label: 'Bot', icon: '🤖' },
   { to: '/subscriptions', label: 'Suscripciones', icon: '💳' },
