@@ -4,11 +4,10 @@ server {
     index index.html;
 
     # Proxy /api al backend por la red privada de Railway.
-    # BACKEND_INTERNAL_HOST y RESOLVER vienen de las variables de Railway.
+    # envsubst reemplaza estas variables ANTES de que nginx lea la config,
+    # dejando un host literal que nginx resuelve al arrancar (sin resolver).
     location /api/ {
-        resolver ${NGINX_LOCAL_RESOLVERS} valid=10s;
-        set $upstream ${BACKEND_INTERNAL_HOST};
-        proxy_pass http://$upstream:${BACKEND_INTERNAL_PORT};
+        proxy_pass http://${BACKEND_INTERNAL_HOST}:${BACKEND_INTERNAL_PORT};
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
