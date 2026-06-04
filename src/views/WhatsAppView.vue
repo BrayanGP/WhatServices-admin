@@ -3,6 +3,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useAdminStore } from '../stores/admin'
 
 const store = useAdminStore()
+const PUBLIC_BACKEND = import.meta.env.VITE_PUBLIC_BACKEND_URL || ''
 const instances = ref([])
 const active = ref(null)
 const loading = ref(false)
@@ -120,6 +121,31 @@ onMounted(load)
             class="text-xs bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 disabled:opacity-40">Activar</button>
           <button @click="logout(instName(i))" class="text-xs text-amber-600 px-3 py-1.5 rounded-lg hover:bg-amber-50">Logout</button>
           <button @click="remove(instName(i))" class="text-xs text-red-500 px-3 py-1.5 rounded-lg hover:bg-red-50">Eliminar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Códigos QR descargables -->
+    <div class="mt-8">
+      <h2 class="text-lg font-bold text-gray-800 mb-1">Códigos QR</h2>
+      <p class="text-xs text-gray-400 mb-4">Imprímelos en pancartas. Son fijos: aunque cambies de número, siguen funcionando.</p>
+      <div v-if="!PUBLIC_BACKEND" class="bg-amber-50 border border-amber-200 text-amber-700 text-sm px-3 py-2 rounded">
+        Configura la variable <code>VITE_PUBLIC_BACKEND_URL</code> en Railway para ver los QR.
+      </div>
+      <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="bg-white rounded-xl shadow p-5 text-center">
+          <p class="font-medium text-gray-800 mb-1">Iniciar conversación (clientes)</p>
+          <p class="text-xs text-gray-500 mb-3">Redirige al número activo en WhatsApp.</p>
+          <img :src="`${PUBLIC_BACKEND}/wa/qr`" alt="QR conversación" class="w-44 h-44 mx-auto" />
+          <a :href="`${PUBLIC_BACKEND}/wa/qr`" download="qr-conversacion.png"
+            class="inline-block mt-2 text-blue-600 text-sm hover:underline">Descargar</a>
+        </div>
+        <div class="bg-white rounded-xl shadow p-5 text-center">
+          <p class="font-medium text-gray-800 mb-1">Registro de profesionales</p>
+          <p class="text-xs text-gray-500 mb-3">Lleva al formulario para que se registren empleados.</p>
+          <img :src="`${PUBLIC_BACKEND}/wa/qr-unete`" alt="QR registro" class="w-44 h-44 mx-auto" />
+          <a :href="`${PUBLIC_BACKEND}/wa/qr-unete`" download="qr-registro-empleados.png"
+            class="inline-block mt-2 text-blue-600 text-sm hover:underline">Descargar</a>
         </div>
       </div>
     </div>
