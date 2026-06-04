@@ -42,8 +42,8 @@ onMounted(async () => {
   loading.value = false
   await nextTick()
 
-  // Conversaciones por dia
-  charts.push(new Chart(refs.conv.value, lineData(stats.value.conversationsByDay, 'Conversaciones', GREEN)))
+  // Solicitudes por dia
+  charts.push(new Chart(refs.conv.value, lineData(stats.value.requestsByDay, 'Solicitudes', GREEN)))
 
   // Servicios mas pedidos
   charts.push(new Chart(refs.services.value, barData(
@@ -74,15 +74,15 @@ onMounted(async () => {
       <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
         <StatCard title="Profesionales" :value="stats.totals.providers" icon="🔧" />
         <StatCard title="Usuarios" :value="stats.totals.users" icon="👥" />
+        <StatCard title="Solicitudes" :value="stats.totals.requests" icon="📋" />
         <StatCard title="Conversaciones" :value="stats.totals.conversations" icon="💬" />
-        <StatCard title="Categorías" :value="stats.totals.categories" icon="🗂️" />
         <StatCard title="Reseñas" :value="stats.totals.reviews" icon="⭐" />
       </div>
 
       <!-- Gráficas -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="bg-white rounded-xl shadow p-5">
-          <h3 class="font-semibold text-gray-700 mb-3">Conversaciones por día (14d)</h3>
+          <h3 class="font-semibold text-gray-700 mb-3">Solicitudes por día (14d)</h3>
           <div class="h-64"><canvas :ref="refs.conv"></canvas></div>
         </div>
         <div class="bg-white rounded-xl shadow p-5">
