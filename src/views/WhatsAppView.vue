@@ -11,18 +11,31 @@ const newName = ref('')
 const creating = ref(false)
 const qr = ref(null)        // { name, base64, code }
 const error = ref('')
+const botEnabled = ref(true)
+const togglingBot = ref(false)
 
 const load = async () => {
   loading.value = true
   error.value = ''
   try {
-    const data = await store.fetchInstances()
+    const [data, cfg] = await Promise.all([store.fetchInstances(), store.fetchBotConfig()])
     instances.value = Array.isArray(data.instances) ? data.instances : []
     active.value = data.active
+    botEnabled.value = cfg.enabled
   } catch (e) {
     error.value = 'No se pudieron cargar las instancias.'
   } finally {
     loading.value = false
+  }
+}
+
+const toggleBot = async () => {
+  togglingBot.value = true
+  try {
+    const cfg = await store.updateBotConfig({ enabled: !botEnabled.value })
+    botEnabled.value = cfg.enabled
+  } finally {
+    togglingBot.value = false
   }
 }
 
@@ -86,6 +99,25 @@ onMounted(load)
     </div>
 
     <div v-if="error" class="bg-red-50 border border-red-200 text-red-600 text-sm px-3 py-2 rounded mb-4">{{ error }}</div>
+
+    <!-- Interruptor del bot / API -->
+    <div class="bg-white rounded-xl shadow p-4 mb-4 flex items-center justify-between"
+      :class="botEnabled ? 'border-l-4 border-green-500' : 'border-l-4 border-red-500'">
+      <div>
+        <p class="font-semibold text-gray-800">
+          Bot de WhatsApp:
+          <span :class="botEnabled ? 'text-green-600' : 'text-red-600'">{{ botEnabled ? 'Activo' : 'Pausado' }}</span>
+        </p>
+        <p class="text-xs text-gray-500">
+          {{ botEnabled ? 'El bot responde y envía mensajes automáticamente.' : 'El bot NO envía mensajes. Las conversaciones quedan registradas pero sin respuesta.' }}
+        </p>
+      </div>
+      <button @click="toggleBot" :disabled="togglingBot"
+        class="px-4 py-2 rounded-lg text-sm font-semibold text-white disabled:opacity-50"
+        :class="botEnabled ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'">
+        {{ togglingBot ? '...' : (botEnabled ? '⏸ Pausar bot' : '▶ Activar bot') }}
+      </button>
+    </div>
 
     <!-- Crear -->
     <div class="bg-white rounded-xl shadow p-4 mb-4 flex gap-2 items-center">
