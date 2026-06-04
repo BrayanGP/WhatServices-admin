@@ -8,6 +8,8 @@ const routes = [
   { path: '/users', component: () => import('../views/UsersView.vue'), meta: { requiresAuth: true } },
   { path: '/subscriptions', component: () => import('../views/SubscriptionsView.vue'), meta: { requiresAuth: true } },
   { path: '/categories', component: () => import('../views/CategoriesView.vue'), meta: { requiresAuth: true } },
+  { path: '/conversations', component: () => import('../views/ConversationsView.vue'), meta: { requiresAuth: true } },
+  { path: '/whatsapp', component: () => import('../views/WhatsAppView.vue'), meta: { requiresAuth: true } },
   { path: '/settings', component: () => import('../views/SettingsView.vue'), meta: { requiresAuth: true } },
 ]
 
