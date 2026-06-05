@@ -181,9 +181,13 @@ const unpublish = async () => {
   try { const r = await store.unpublishFlow(); isPublished.value = r.isPublished; flash('⏸️ Despublicado: el bot volvió al flujo por defecto') }
   catch (e) { flash('Error') }
 }
-const pickTemplate = (t) => {
+const pickTemplate = async (t) => {
   if (!confirm(`Cargar la plantilla “${t.name}”. Esto reemplaza el lienzo actual. ¿Continuar?`)) return
+  if (t.ensureIntents) {
+    try { await store.ensureDefaultIntents(); intentsList.value = await store.fetchIntents().catch(() => intentsList.value) } catch (e) { /* noop */ }
+  }
   applyGraph(t.build()); selectedId.value = null; galleryOpen.value = false
+  flash('Plantilla cargada' + (t.ensureIntents ? ' · intenciones creadas' : ''))
 }
 const pickCustom = (t) => {
   if (!confirm(`Cargar la plantilla “${t.name}”. Esto reemplaza el lienzo actual. ¿Continuar?`)) return

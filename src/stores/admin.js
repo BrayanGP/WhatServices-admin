@@ -249,6 +249,12 @@ export const useAdminStore = defineStore('admin', () => {
     return res.json()
   }
 
+  const ensureDefaultIntents = async () => {
+    const res = await auth.authFetch(`${API}/admin/bot/intents/ensure-defaults`, { method: 'POST' })
+    if (!res.ok) throw new Error((await res.json()).message || 'Error')
+    return res.json()
+  }
+
   // ----- Flujo visual del bot -----
   const fetchFlow = async () => (await auth.authFetch(`${API}/admin/bot/flow`)).json()
 
@@ -300,7 +306,7 @@ export const useAdminStore = defineStore('admin', () => {
     fetchInstances, createInstance, connectInstance, instanceState,
     logoutInstance, deleteInstance, setActiveInstance,
     fetchBotConfig, updateBotConfig,
-    fetchIntents, createIntent, updateIntent, deleteIntent,
+    fetchIntents, createIntent, updateIntent, deleteIntent, ensureDefaultIntents,
     fetchFlow, saveFlow, publishFlow, unpublishFlow,
     fetchFlowTemplates, createFlowTemplate, deleteFlowTemplate,
     fetchStats,

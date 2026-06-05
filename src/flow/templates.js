@@ -129,10 +129,78 @@ const catalogo = () => ({
   ],
 })
 
+// Asistente completo: saludo por hora + intenciones + carrusel de perfiles + ver trabajos + reinicio
+const asistente = () => ({
+  nodes: [
+    { id: 'start', type: 'start', position: { x: 360, y: -40 }, data: {} },
+    { id: 'ask_inicio', type: 'ask', position: { x: 320, y: 70 }, data: {
+      text: '{greeting} 👋 Soy el asistente de *WhatServices*.\nEscribe el *servicio* que buscas (ej. plomero, electricista) o escribe *ayuda*.',
+      saveAs: 'mensaje', capture: 'text' } },
+    { id: 'node_intent', type: 'intent', position: { x: 340, y: 190 }, data: { intents: ['saludo', 'ayuda', 'despedida', 'hablar-humano'] } },
+    { id: 'msg_saludo', type: 'message', position: { x: 40, y: 150 }, data: { text: '{greeting}, {firstName}! 😊 Con gusto te ayudo.' } },
+    { id: 'msg_ayuda', type: 'message', position: { x: 40, y: 250 }, data: { text: 'Te ayudo a encontrar profesionales cerca de ti. 🛠️\nSolo dime el servicio que necesitas (ej. *plomero*, *electricista*, *carpintero*).' } },
+    { id: 'msg_humano', type: 'message', position: { x: 40, y: 350 }, data: { text: '¡Claro! Te paso con un asesor humano. 🙋 En un momento te contactan.' } },
+    { id: 'msg_despedida', type: 'message', position: { x: 700, y: 120 }, data: { text: '¡Gracias por usar *WhatServices*! 👋 Escríbeme cuando quieras.' } },
+    { id: 'ask_service', type: 'ask', position: { x: 330, y: 320 }, data: {
+      text: '¿Qué servicio necesitas? 🔧\n\n{servicesAvailable}', saveAs: 'serviceText', capture: 'text' } },
+    { id: 'act_match', type: 'action', position: { x: 340, y: 430 }, data: { action: 'matchService', params: {} } },
+    { id: 'msg_noservice', type: 'message', position: { x: 60, y: 470 }, data: { text: 'No reconocí ese servicio 🤔. Estos son los disponibles:\n\n{servicesAvailable}' } },
+    { id: 'ask_mode', type: 'ask', position: { x: 340, y: 540 }, data: {
+      text: 'Perfecto, *{service}* ✅\n\n¿Cómo los prefieres?\n1️⃣ Más *cercanos* a ti\n2️⃣ Mejor *calificados*', saveAs: 'searchMode', capture: 'mode' } },
+    { id: 'cond_mode', type: 'condition', position: { x: 340, y: 660 }, data: {
+      cases: [{ label: 'Más cercanos', logic: 'AND', rules: [{ field: 'vars.searchMode', op: 'equals', value: 'near' }] }] } },
+    { id: 'ask_zip', type: 'ask', position: { x: 110, y: 760 }, data: {
+      text: 'Dame tu *código postal* (5 dígitos) para buscar cerca de ti. 📍', saveAs: 'zip', capture: 'zip' } },
+    { id: 'act_search', type: 'action', position: { x: 380, y: 780 }, data: { action: 'search', params: {} } },
+    { id: 'msg_noresults', type: 'message', position: { x: 700, y: 760 }, data: { text: 'Por ahora no tengo profesionales de *{service}* disponibles 😕. ¿Quieres probar con otro servicio?' } },
+    { id: 'act_carousel', type: 'carousel', position: { x: 380, y: 890 }, data: { source: 'results', cards: [] } },
+    { id: 'msg_pick', type: 'message', position: { x: 380, y: 1000 }, data: {
+      text: '👆 Estos son los *{count}* profesionales para *{service}*.\n\nResponde con el *número* (1-{count}) para ver sus *trabajos* y contacto.\nEscribe *otro* para una nueva búsqueda o *salir* para terminar.' } },
+    { id: 'ask_pick', type: 'ask', position: { x: 380, y: 1100 }, data: { text: '', saveAs: 'pick', capture: 'text' } },
+    { id: 'node_exit', type: 'intent', position: { x: 380, y: 1210 }, data: { intents: ['despedida'] } },
+    { id: 'act_works', type: 'action', position: { x: 380, y: 1320 }, data: { action: 'showWorks', params: {} } },
+    { id: 'end', type: 'end', position: { x: 720, y: 240 }, data: {} },
+  ],
+  edges: [
+    { id: 'a1', source: 'start', target: 'ask_inicio' },
+    { id: 'a2', source: 'ask_inicio', target: 'node_intent' },
+    { id: 'a3', source: 'node_intent', target: 'msg_saludo', sourceHandle: 'intent:saludo', label: 'Saludo' },
+    { id: 'a4', source: 'node_intent', target: 'msg_ayuda', sourceHandle: 'intent:ayuda', label: 'Ayuda' },
+    { id: 'a5', source: 'node_intent', target: 'msg_despedida', sourceHandle: 'intent:despedida', label: 'Despedida' },
+    { id: 'a6', source: 'node_intent', target: 'msg_humano', sourceHandle: 'intent:hablar-humano', label: 'Humano' },
+    { id: 'a7', source: 'node_intent', target: 'act_match', sourceHandle: 'else', label: 'Servicio' },
+    { id: 'a8', source: 'msg_saludo', target: 'ask_service' },
+    { id: 'a9', source: 'msg_ayuda', target: 'ask_service' },
+    { id: 'a10', source: 'msg_humano', target: 'end' },
+    { id: 'a11', source: 'msg_despedida', target: 'end' },
+    { id: 'a12', source: 'ask_service', target: 'act_match' },
+    { id: 'a13', source: 'act_match', target: 'ask_mode', sourceHandle: 'matched', label: 'Sí reconoció' },
+    { id: 'a14', source: 'act_match', target: 'msg_noservice', sourceHandle: 'notMatched', label: 'No reconoció' },
+    { id: 'a15', source: 'msg_noservice', target: 'ask_service' },
+    { id: 'a16', source: 'ask_mode', target: 'cond_mode' },
+    { id: 'a17', source: 'cond_mode', target: 'ask_zip', sourceHandle: 'case-0', label: 'Cercanos' },
+    { id: 'a18', source: 'cond_mode', target: 'act_search', sourceHandle: 'else', label: 'Mejor calificados' },
+    { id: 'a19', source: 'ask_zip', target: 'act_search' },
+    { id: 'a20', source: 'act_search', target: 'act_carousel', sourceHandle: 'found', label: 'Hay resultados' },
+    { id: 'a21', source: 'act_search', target: 'msg_noresults', sourceHandle: 'empty', label: 'Sin resultados' },
+    { id: 'a22', source: 'msg_noresults', target: 'ask_service' },
+    { id: 'a23', source: 'act_carousel', target: 'msg_pick' },
+    { id: 'a24', source: 'msg_pick', target: 'ask_pick' },
+    { id: 'a25', source: 'ask_pick', target: 'node_exit' },
+    { id: 'a26', source: 'node_exit', target: 'msg_despedida', sourceHandle: 'intent:despedida', label: 'Salir' },
+    { id: 'a27', source: 'node_exit', target: 'act_works', sourceHandle: 'else', label: 'Elegir' },
+    { id: 'a28', source: 'act_works', target: 'ask_pick', sourceHandle: 'shown', label: 'Mostró trabajos' },
+    { id: 'a29', source: 'act_works', target: 'act_carousel', sourceHandle: 'back', label: 'Volver' },
+    { id: 'a30', source: 'act_works', target: 'ask_service', sourceHandle: 'menu', label: 'Otro servicio' },
+    { id: 'a31', source: 'act_works', target: 'ask_pick', sourceHandle: 'none', label: 'No entendió' },
+  ],
+})
+
 export const TEMPLATES = [
   { id: 'default', name: 'Flujo completo', icon: '🤖', description: 'El bot estándar: servicio → cercanos/mejor calificados → catálogo → ver trabajos.', build: currentFlowTemplate },
   { id: 'simple', name: 'Búsqueda simple', icon: '⚡', description: 'Pide el servicio y muestra el top 5 mejor calificados.', build: simple },
   { id: 'intenciones', name: 'Con intenciones', icon: '🎯', description: 'Detecta “hablar con humano” y deriva; lo demás busca servicio.', build: intenciones },
   { id: 'soporte', name: 'Soporte / FAQ', icon: '🛟', description: 'Menú de botones + lista de preguntas frecuentes + escalar a humano.', build: soporte },
   { id: 'catalogo', name: 'Catálogo con carrusel', icon: '🖼️', description: 'Carrusel de los 5 proveedores → eliges número → ves sus trabajos → volver.', build: catalogo },
+  { id: 'asistente', name: 'Asistente completo ⭐', icon: '🤝', description: 'Saluda según la hora, entiende intenciones, busca por cercanía/calificación, carrusel de fotos de perfil, ver trabajos y reinicio al despedirse.', build: asistente, ensureIntents: true },
 ]
