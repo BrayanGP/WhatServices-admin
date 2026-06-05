@@ -9,6 +9,7 @@ import '@vue-flow/controls/dist/style.css'
 import { useAdminStore } from '../stores/admin'
 import FlowNode from '../flow/FlowNode.vue'
 import FlowSimulator from '../flow/FlowSimulator.vue'
+import IntentsManager from '../components/IntentsManager.vue'
 import { TEMPLATES } from '../flow/templates'
 import {
   PALETTE, PALETTE_GROUPS, FLOW_VARS, makeData, ACTIONS, CAPTURE_OPTS, CONDITION_FIELDS, OPERATORS, uid,
@@ -36,6 +37,8 @@ const simOpen = ref(false)
 const showVars = ref(false)
 const intentsList = ref([])
 const categoriesList = ref([])
+const availableCats = ref([])
+const customTemplates = ref([])
 const TEMPLATES_ = TEMPLATES
 const FLOW_VARS_ = FLOW_VARS
 const groupedPalette = PALETTE_GROUPS.map((g) => ({ g, items: PALETTE.filter((p) => p.group === g) }))
@@ -45,6 +48,12 @@ const highlightNode = (id) => {
   nodes.value.forEach((n) => { n.class = n.id === id ? 'sim-active' : '' })
 }
 const closeSim = () => { simOpen.value = false; highlightNode(null) }
+const fitAll = () => { try { fitView({ padding: 0.2 }) } catch (e) {} }
+
+// Gestor de intenciones (modal accesible desde el editor)
+const intentsOpen = ref(false)
+const openIntents = () => { intentsOpen.value = true }
+const onIntentsChanged = async () => { intentsList.value = await store.fetchIntents().catch(() => intentsList.value) }
 
 const selectedNode = computed(() => nodes.value.find((n) => n.id === selectedId.value) || null)
 
@@ -64,14 +73,19 @@ const ensureStart = () => {
 
 onMounted(async () => {
   try {
-    const [r, ints, cats] = await Promise.all([
+    const [r, ints, cats, provs, tpls] = await Promise.all([
       store.fetchFlow(),
       store.fetchIntents().catch(() => []),
       store.fetchCategories().catch(() => []),
+      store.fetchProviders({ limit: 1000 }).catch(() => ({ providers: [] })),
+      store.fetchFlowTemplates().catch(() => []),
     ])
     isPublished.value = !!r.isPublished
     intentsList.value = ints || []
+    customTemplates.value = tpls || []
     categoriesList.value = Array.isArray(cats) ? cats : (cats.categories || [])
+    const provList = (provs.providers || []).filter((p) => p.availability === 'available' && !p.isBlocked)
+    availableCats.value = [...new Set(provList.flatMap((p) => p.categories || []))]
     if (r.draft && (r.draft.nodes || []).length) applyGraph(r.draft)
     else ensureStart()
   } catch (e) { ensureStart() }
@@ -135,6 +149,26 @@ const pickTemplate = (t) => {
   if (!confirm(`Cargar la plantilla “${t.name}”. Esto reemplaza el lienzo actual. ¿Continuar?`)) return
   applyGraph(t.build()); selectedId.value = null; galleryOpen.value = false
 }
+const pickCustom = (t) => {
+  if (!confirm(`Cargar la plantilla “${t.name}”. Esto reemplaza el lienzo actual. ¿Continuar?`)) return
+  applyGraph(t.graph || { nodes: [], edges: [] }); selectedId.value = null; galleryOpen.value = false
+}
+const removeCustom = async (t) => {
+  if (!confirm(`¿Eliminar la plantilla “${t.name}”?`)) return
+  try { await store.deleteFlowTemplate(t._id); customTemplates.value = customTemplates.value.filter((x) => x._id !== t._id) }
+  catch (e) { flash('No se pudo eliminar') }
+}
+const saveAsTemplate = async () => {
+  const name = prompt('Nombre de la plantilla:')
+  if (!name || !name.trim()) return
+  const description = prompt('Descripción (opcional):') || ''
+  try {
+    const g = serialize()
+    const tpl = await store.createFlowTemplate({ name: name.trim(), description, icon: '⭐', nodes: g.nodes, edges: g.edges })
+    customTemplates.value.unshift(tpl)
+    flash('⭐ Plantilla guardada')
+  } catch (e) { flash(e.message || 'No se pudo guardar la plantilla') }
+}
 
 // ---- Inspector: helpers para listas de los componentes ----
 const addButton = (d) => d.buttons.push({ id: uid(), label: `Opción ${d.buttons.length + 1}` })
@@ -160,23 +194,27 @@ const clearAll = () => {
 <template>
   <div class="flex flex-col" style="height: calc(100vh - 60px)">
     <!-- Toolbar -->
-    <div class="flex items-center gap-2 flex-wrap px-1 py-2 border-b border-gray-200">
-      <router-link to="/bot" class="text-sm text-brand-medium hover:underline mr-1">← Bot</router-link>
+    <div class="flex items-center gap-x-2 gap-y-1 flex-wrap px-2 py-2 border-b border-gray-200">
+      <router-link to="/bot" class="text-sm text-brand-medium hover:underline">← Bot</router-link>
       <span class="text-xs px-2 py-1 rounded-full font-medium"
         :class="isPublished ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'">
-        {{ isPublished ? '● Publicado (en uso)' : '○ Borrador (usa flujo por defecto)' }}
+        {{ isPublished ? '● Publicado' : '○ Borrador' }}
       </span>
-      <div class="flex-1"></div>
       <span class="text-xs text-gray-500">{{ status }}</span>
-      <button @click="simOpen = true" class="text-sm px-3 py-1.5 rounded-lg border border-brand-green text-brand-medium hover:bg-green-50">📱 Probar</button>
-      <button @click="galleryOpen = true" class="text-sm px-3 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-50">Plantillas</button>
-      <button @click="clearAll" class="text-sm px-3 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-50">Limpiar</button>
-      <button @click="save" class="text-sm px-3 py-1.5 rounded-lg bg-brand-medium text-white hover:opacity-90">Guardar borrador</button>
-      <button v-if="!isPublished" @click="publish" class="text-sm px-3 py-1.5 rounded-lg bg-brand-green text-white hover:bg-brand-lightGreen">Publicar</button>
-      <template v-else>
-        <button @click="publish" class="text-sm px-3 py-1.5 rounded-lg bg-brand-green text-white hover:bg-brand-lightGreen">Republicar</button>
-        <button @click="unpublish" class="text-sm px-3 py-1.5 rounded-lg border border-red-300 text-red-600 hover:bg-red-50">Despublicar</button>
-      </template>
+
+      <div class="ml-auto flex items-center gap-1.5 flex-wrap justify-end">
+        <button @click="fitAll" class="text-sm px-2.5 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-50">🔍 Ver todo</button>
+        <button @click="openIntents" class="text-sm px-2.5 py-1.5 rounded-lg border border-amber-300 text-amber-700 hover:bg-amber-50">🎯 Intenciones</button>
+        <button @click="simOpen = true" class="text-sm px-2.5 py-1.5 rounded-lg border border-brand-green text-brand-medium hover:bg-green-50">📱 Probar</button>
+        <button @click="galleryOpen = true" class="text-sm px-2.5 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-50">Plantillas</button>
+        <button @click="clearAll" class="text-sm px-2.5 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-50">Limpiar</button>
+        <button @click="save" class="text-sm px-2.5 py-1.5 rounded-lg bg-brand-medium text-white hover:opacity-90">Guardar</button>
+        <button v-if="!isPublished" @click="publish" class="text-sm px-2.5 py-1.5 rounded-lg bg-brand-green text-white hover:bg-brand-lightGreen">Publicar</button>
+        <template v-else>
+          <button @click="publish" class="text-sm px-2.5 py-1.5 rounded-lg bg-brand-green text-white hover:bg-brand-lightGreen">Republicar</button>
+          <button @click="unpublish" class="text-sm px-2.5 py-1.5 rounded-lg border border-red-300 text-red-600 hover:bg-red-50">Despublicar</button>
+        </template>
+      </div>
     </div>
 
     <div class="flex flex-1 min-h-0">
@@ -410,11 +448,16 @@ const clearAll = () => {
 
     <!-- Modal: galería de plantillas -->
     <div v-if="galleryOpen" class="fixed inset-0 z-40 bg-black/40 grid place-items-center p-4" @click.self="galleryOpen = false">
-      <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl p-5">
+      <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl p-5 max-h-[85vh] overflow-y-auto">
         <div class="flex items-center justify-between mb-4">
           <h3 class="font-bold text-brand-dark text-lg">Plantillas de flujo</h3>
-          <button @click="galleryOpen = false" class="text-gray-400 hover:text-gray-600">✕</button>
+          <div class="flex items-center gap-2">
+            <button @click="saveAsTemplate" class="text-sm px-3 py-1.5 rounded-lg bg-brand-green text-white hover:bg-brand-lightGreen">⭐ Guardar lienzo como plantilla</button>
+            <button @click="galleryOpen = false" class="text-gray-400 hover:text-gray-600">✕</button>
+          </div>
         </div>
+
+        <p class="text-[11px] uppercase tracking-wide text-gray-400 font-semibold mb-2">Integradas</p>
         <div class="grid sm:grid-cols-2 gap-3">
           <button v-for="t in TEMPLATES_" :key="t.id" @click="pickTemplate(t)"
             class="text-left border border-gray-200 rounded-xl p-4 hover:border-brand-green hover:shadow-sm transition">
@@ -423,13 +466,43 @@ const clearAll = () => {
             <p class="text-xs text-gray-500 mt-1 leading-snug">{{ t.description }}</p>
           </button>
         </div>
-        <p class="text-[11px] text-gray-400 mt-4">Al elegir una plantilla se reemplaza el lienzo. Luego puedes editarla y publicarla.</p>
+
+        <template v-if="customTemplates.length">
+          <p class="text-[11px] uppercase tracking-wide text-gray-400 font-semibold mt-5 mb-2">Mis plantillas</p>
+          <div class="grid sm:grid-cols-2 gap-3">
+            <div v-for="t in customTemplates" :key="t._id"
+              class="relative text-left border border-gray-200 rounded-xl p-4 hover:border-brand-green hover:shadow-sm transition">
+              <button @click="removeCustom(t)" class="absolute top-2 right-2 text-red-400 hover:text-red-600 text-xs">🗑️</button>
+              <button @click="pickCustom(t)" class="block w-full text-left">
+                <div class="text-2xl mb-1">{{ t.icon || '⭐' }}</div>
+                <p class="font-semibold text-brand-dark pr-5">{{ t.name }}</p>
+                <p class="text-xs text-gray-500 mt-1 leading-snug">{{ t.description }}</p>
+              </button>
+            </div>
+          </div>
+        </template>
+
+        <p class="text-[11px] text-gray-400 mt-4">Al elegir una plantilla se reemplaza el lienzo. Guarda el lienzo actual como plantilla para reutilizarlo después.</p>
+      </div>
+    </div>
+
+    <!-- Modal: gestor de intenciones -->
+    <div v-if="intentsOpen" class="fixed inset-0 z-40 bg-black/40 grid place-items-center p-4" @click.self="intentsOpen = false">
+      <div class="bg-white rounded-2xl shadow-xl w-full max-w-5xl p-5 max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="font-bold text-brand-dark text-lg">🎯 Intenciones</h3>
+            <p class="text-xs text-gray-500">Crea y prueba intenciones; úsalas en el nodo “Intención” o en condiciones.</p>
+          </div>
+          <button @click="intentsOpen = false" class="text-gray-400 hover:text-gray-600">✕</button>
+        </div>
+        <IntentsManager @changed="onIntentsChanged" />
       </div>
     </div>
 
     <!-- Panel: simulador de teléfono -->
-    <FlowSimulator v-if="simOpen" :nodes="nodes" :edges="edges" :categories="categoriesList" :intents="intentsList"
-      @node="highlightNode" @close="closeSim" />
+    <FlowSimulator v-if="simOpen" :nodes="nodes" :edges="edges" :categories="categoriesList"
+      :available-categories="availableCats" :intents="intentsList" @node="highlightNode" @close="closeSim" />
   </div>
 </template>
 

@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAdminStore } from '../stores/admin'
+import IntentsManager from '../components/IntentsManager.vue'
 
 const store = useAdminStore()
 const router = useRouter()
@@ -289,7 +290,10 @@ const toggleActive = async (it) => {
       </div>
 
       <!-- ============ INTENCIONES ============ -->
-      <div v-show="tab === 'intenciones'" class="grid md:grid-cols-5 gap-5">
+      <div v-show="tab === 'intenciones'">
+        <IntentsManager @changed="() => {}" />
+      </div>
+      <template v-if="false">
         <!-- Formulario -->
         <div class="md:col-span-2 bg-white rounded-xl shadow p-5 self-start">
           <p class="font-medium text-brand-dark mb-3">{{ editingId ? 'Editar intención' : 'Nueva intención' }}</p>
@@ -396,7 +400,7 @@ const toggleActive = async (it) => {
             </div>
           </div>
         </div>
-      </div>
+      </template>
 
       <!-- Guardar (general / mensajes) -->
       <div v-if="tab !== 'intenciones'" class="flex items-center gap-3 mt-5">

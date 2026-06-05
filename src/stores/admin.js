@@ -274,6 +274,23 @@ export const useAdminStore = defineStore('admin', () => {
     return res.json()
   }
 
+  // ----- Plantillas de flujo propias -----
+  const fetchFlowTemplates = async () => (await auth.authFetch(`${API}/admin/bot/flow-templates`)).json()
+
+  const createFlowTemplate = async (data) => {
+    const res = await auth.authFetch(`${API}/admin/bot/flow-templates`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data),
+    })
+    if (!res.ok) throw new Error((await res.json()).message || 'Error')
+    return res.json()
+  }
+
+  const deleteFlowTemplate = async (id) => {
+    const res = await auth.authFetch(`${API}/admin/bot/flow-templates/${id}`, { method: 'DELETE' })
+    if (!res.ok) throw new Error((await res.json()).message || 'Error')
+    return res.json()
+  }
+
   return {
     fetchProviders, toggleVerify, toggleBlockProvider, resetProviderPassword,
     fetchUsers, toggleBlockUser, createUser, updateUserRole, resetUserPassword,
@@ -285,6 +302,7 @@ export const useAdminStore = defineStore('admin', () => {
     fetchBotConfig, updateBotConfig,
     fetchIntents, createIntent, updateIntent, deleteIntent,
     fetchFlow, saveFlow, publishFlow, unpublishFlow,
+    fetchFlowTemplates, createFlowTemplate, deleteFlowTemplate,
     fetchStats,
     fetchRequests, fetchRequest, updateRequest,
   }

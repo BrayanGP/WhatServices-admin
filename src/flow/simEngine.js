@@ -106,6 +106,7 @@ export const advance = (graph, state, input, helpers) => {
     name: ctx.name, firstName, greeting, phone: '521555000000', intent: ctx.intent,
     service: ctx.service || '', cp: ctx.cp || '', count: ctx.resultsCount || 0,
     services: helpers.servicesList || '', servicesCount: helpers.servicesCount || 0,
+    servicesAvailable: helpers.servicesAvailable || '', servicesAvailableCount: helpers.servicesAvailableCount || 0,
     date: dateStr, time: timeStr, open: 8, close: 20, ...ctx.vars,
   })
 

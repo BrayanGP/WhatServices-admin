@@ -6,6 +6,7 @@ const props = defineProps({
   nodes: { type: Array, default: () => [] },
   edges: { type: Array, default: () => [] },
   categories: { type: Array, default: () => [] },
+  availableCategories: { type: Array, default: () => [] }, // nombres de categorías con proveedores
   intents: { type: Array, default: () => [] },
 })
 const emit = defineEmits(['close', 'node'])
@@ -26,6 +27,8 @@ const graph = () => ({
 const helpers = computed(() => ({
   servicesList: props.categories.map((c) => `• ${c.name}`).join('\n'),
   servicesCount: props.categories.length,
+  servicesAvailable: props.categories.filter((c) => props.availableCategories.includes(c.name)).map((c) => `• ${c.name}`).join('\n'),
+  servicesAvailableCount: props.availableCategories.length,
   // Match difuso (mismo espíritu que fuse.js del backend): substring o prefijo de 4 letras
   matchService: (lower) => {
     const nl = norm(lower)
