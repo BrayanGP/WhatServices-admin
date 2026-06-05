@@ -103,6 +103,15 @@ export const useAdminStore = defineStore('admin', () => {
     return res.json()
   }
 
+  const reviewCategory = async (id, action) => {
+    const res = await auth.authFetch(`${API}/admin/categories/${id}/review`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action }),
+    })
+    return res.json()
+  }
+
   // ----- Conversaciones / Leads -----
   const fetchConversations = async (params = {}) => {
     const q = new URLSearchParams(params).toString()
@@ -219,7 +228,7 @@ export const useAdminStore = defineStore('admin', () => {
     fetchProviders, toggleVerify, toggleBlockProvider, resetProviderPassword,
     fetchUsers, toggleBlockUser, createUser, updateUserRole, resetUserPassword,
     fetchModules, fetchRoles, createRole, updateRole, deleteRole,
-    fetchCategories, createCategory, updateCategory,
+    fetchCategories, createCategory, updateCategory, reviewCategory,
     fetchConversations, fetchConversation, toggleTakeover, replyConversation,
     fetchInstances, createInstance, connectInstance, instanceState,
     logoutInstance, deleteInstance, setActiveInstance,
