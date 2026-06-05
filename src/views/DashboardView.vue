@@ -1,5 +1,6 @@
 <script setup>
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick } from 'vue'
+import { useRouter } from 'vue-router'
 import { Chart, registerables } from 'chart.js'
 import StatCard from '../components/StatCard.vue'
 import { useAdminStore } from '../stores/admin'
@@ -7,39 +8,93 @@ import { useAdminStore } from '../stores/admin'
 Chart.register(...registerables)
 
 const store = useAdminStore()
+const router = useRouter()
 const stats = ref(null)
+const botEnabled = ref(true)
 const loading = ref(true)
+const updatedAt = ref(null)
+const tick = ref(0)
 
-const refs = { conv: ref(null), services: ref(null), hours: ref(null), growth: ref(null) }
-const charts = []
+const refs = { day: ref(null), services: ref(null) }
+let charts = []
+let auto = null
+let ticker = null
 
 const BLUE = '#2563eb'
 const SLATE = '#334155'
-const INDIGO = '#6366f1'
 
+// ----- Bandeja -----
+const tabs = [
+  { label: 'Todas', value: '' },
+  { label: 'Nuevas', value: 'nueva' },
+  { label: 'Asignadas', value: 'asignada' },
+  { label: 'Completadas', value: 'completada' },
+]
+const activeTab = ref('')
+const inbox = ref([])
+const inboxLoading = ref(false)
+
+const loadInbox = async () => {
+  inboxLoading.value = true
+  try {
+    const data = await store.fetchRequests({ status: activeTab.value, limit: 8 })
+    inbox.value = data.requests
+  } finally {
+    inboxLoading.value = false
+  }
+}
+const setTab = (v) => { activeTab.value = v; loadInbox() }
+
+// ----- Charts -----
 const lineData = (rows, label, color) => ({
   type: 'line',
-  data: {
-    labels: rows.map((r) => r._id),
-    datasets: [{ label, data: rows.map((r) => r.count), borderColor: color, backgroundColor: color + '22', tension: 0.3, fill: true, pointRadius: 3 }],
-  },
+  data: { labels: rows.map((r) => r._id), datasets: [{ label, data: rows.map((r) => r.count), borderColor: color, backgroundColor: color + '22', tension: 0.3, fill: true, pointRadius: 3 }] },
   options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } },
 })
-
 const barData = (labels, data, color) => ({
   type: 'bar',
   data: { labels, datasets: [{ data, backgroundColor: color, borderRadius: 6 }] },
   options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } },
 })
+const buildCharts = () => {
+  charts.forEach((c) => c.destroy())
+  charts = []
+  const s = stats.value
+  charts.push(new Chart(refs.day.value, lineData(s.requestsByDay, 'Solicitudes', BLUE)))
+  charts.push(new Chart(refs.services.value, barData(s.topServices.map((x) => x._id), s.topServices.map((x) => x.count), SLATE)))
+}
 
+// ----- Carga -----
+const loadData = async () => {
+  const [s, cfg] = await Promise.all([store.fetchStats(), store.fetchBotConfig()])
+  stats.value = s
+  botEnabled.value = cfg.enabled
+  updatedAt.value = Date.now()
+}
+const refresh = async () => {
+  await loadData()
+  await loadInbox()
+  await nextTick()
+  buildCharts()
+}
+
+// ----- Helpers -----
+const greeting = () => {
+  const h = new Date().getHours()
+  return h < 12 ? 'Buenos días' : h < 19 ? 'Buenas tardes' : 'Buenas noches'
+}
+const today = new Date().toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' })
+const updatedAgo = () => {
+  void tick.value
+  if (!updatedAt.value) return ''
+  const s = Math.floor((Date.now() - updatedAt.value) / 1000)
+  return s < 60 ? `actualizado hace ${s}s` : `actualizado hace ${Math.floor(s / 60)} min`
+}
 const statusClass = (s) => ({
-  nueva: 'bg-blue-100 text-blue-700',
-  contactado: 'bg-amber-100 text-amber-700',
-  asignada: 'bg-purple-100 text-purple-700',
-  completada: 'bg-green-100 text-green-700',
+  nueva: 'bg-blue-100 text-blue-700', contactado: 'bg-amber-100 text-amber-700',
+  asignada: 'bg-purple-100 text-purple-700', completada: 'bg-green-100 text-green-700',
   cancelada: 'bg-gray-200 text-gray-500',
 }[s] || 'bg-gray-100 text-gray-600')
-
 const elapsed = (date) => {
   const ms = Date.now() - new Date(date).getTime()
   const h = Math.floor(ms / 3.6e6)
@@ -49,32 +104,50 @@ const elapsed = (date) => {
 }
 
 onMounted(async () => {
-  stats.value = await store.fetchStats()
+  await loadData()
+  await loadInbox()
   loading.value = false
   await nextTick()
-  charts.push(new Chart(refs.conv.value, lineData(stats.value.requestsByDay, 'Solicitudes', BLUE)))
-  charts.push(new Chart(refs.services.value, barData(stats.value.topServices.map((s) => s._id), stats.value.topServices.map((s) => s.count), SLATE)))
-  const hoursMap = Object.fromEntries(stats.value.peakHours.map((h) => [h._id, h.count]))
-  charts.push(new Chart(refs.hours.value, barData(Array.from({ length: 24 }, (_, h) => `${h}h`), Array.from({ length: 24 }, (_, h) => hoursMap[h] || 0), INDIGO)))
-  charts.push(new Chart(refs.growth.value, lineData(stats.value.providersByDay, 'Profesionales', SLATE)))
+  buildCharts()
+  auto = setInterval(refresh, 60000)
+  ticker = setInterval(() => { tick.value++ }, 10000)
+})
+onUnmounted(() => {
+  clearInterval(auto); clearInterval(ticker)
+  charts.forEach((c) => c.destroy())
 })
 </script>
 
 <template>
   <div class="p-8">
-    <h1 class="text-2xl font-bold text-gray-800 mb-1">Dashboard</h1>
-    <p class="text-sm text-gray-500 mb-6">Centro de operación — lo que necesita tu atención ahora.</p>
-    <div v-if="loading" class="text-gray-400">Cargando estadísticas...</div>
+    <!-- Encabezado -->
+    <div class="flex flex-wrap items-start justify-between gap-3 mb-6">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-800">Dashboard</h1>
+        <p class="text-sm text-gray-500">{{ greeting() }} · <span class="capitalize">{{ today }}</span></p>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="text-xs px-2 py-1 rounded-full flex items-center gap-1"
+          :class="botEnabled ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'">
+          <span class="w-2 h-2 rounded-full" :class="botEnabled ? 'bg-green-500' : 'bg-red-500'"></span>
+          {{ botEnabled ? 'Bot activo' : 'Bot pausado' }}
+        </span>
+        <span class="text-xs text-gray-400">{{ updatedAgo() }}</span>
+        <button @click="refresh" class="text-sm border rounded-lg px-3 py-1.5 text-gray-600 hover:bg-gray-50">↻ Refrescar</button>
+      </div>
+    </div>
+
+    <div v-if="loading" class="text-gray-400">Cargando...</div>
 
     <template v-else>
-      <!-- Tarjetas accionables -->
+      <!-- Accionables -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div class="bg-white rounded-xl shadow p-5 border-l-4 border-amber-400">
           <div class="flex items-start justify-between">
             <span class="text-4xl font-bold text-gray-800">{{ stats.ops.newRequests }}</span>
             <span class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">nuevas</span>
           </div>
-          <p class="text-sm text-gray-500 mt-1">Solicitudes nuevas</p>
+          <p class="text-sm text-gray-500 mt-1">Solicitudes nuevas <span class="text-gray-400">· {{ stats.ops.requestsToday }} hoy</span></p>
           <router-link to="/requests" class="inline-block mt-3 text-sm text-blue-600 font-medium hover:underline">Ver solicitudes →</router-link>
         </div>
         <div class="bg-white rounded-xl shadow p-5 border-l-4 border-purple-400">
@@ -106,15 +179,22 @@ onMounted(async () => {
 
       <!-- Bandeja + Estado/Ranking -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        <!-- Bandeja de solicitudes -->
         <div class="bg-white rounded-xl shadow p-5 lg:col-span-2">
           <div class="flex items-center justify-between mb-3">
             <h3 class="font-semibold text-gray-700">Bandeja de solicitudes</h3>
-            <router-link to="/requests" class="text-sm text-blue-600 hover:underline">Ver todas →</router-link>
+            <div class="flex gap-1">
+              <button v-for="t in tabs" :key="t.value" @click="setTab(t.value)"
+                class="text-xs px-2.5 py-1 rounded-full"
+                :class="activeTab === t.value ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'">
+                {{ t.label }}
+              </button>
+            </div>
           </div>
-          <div v-if="!stats.ops.recentRequests.length" class="text-sm text-gray-400 py-6 text-center">Aún no hay solicitudes.</div>
+          <div v-if="inboxLoading" class="text-sm text-gray-400 py-6 text-center">Cargando...</div>
+          <div v-else-if="!inbox.length" class="text-sm text-gray-400 py-6 text-center">Sin solicitudes en esta vista.</div>
           <div v-else class="divide-y">
-            <div v-for="r in stats.ops.recentRequests" :key="r._id" class="py-3 flex items-center justify-between">
+            <div v-for="r in inbox" :key="r._id" @click="router.push('/requests')"
+              class="py-3 flex items-center justify-between hover:bg-gray-50 -mx-2 px-2 rounded cursor-pointer">
               <div class="min-w-0">
                 <p class="font-medium text-gray-800 truncate">{{ r.service || 'Servicio' }}</p>
                 <p class="text-xs text-gray-500">{{ r.name || r.phone }} · {{ elapsed(r.createdAt) }}
@@ -126,7 +206,6 @@ onMounted(async () => {
           </div>
         </div>
 
-        <!-- Estado del bot + Ranking -->
         <div class="space-y-6">
           <div class="bg-white rounded-xl shadow p-5">
             <h3 class="font-semibold text-gray-700 mb-3">Estado del bot</h3>
@@ -141,9 +220,7 @@ onMounted(async () => {
             <ol v-else class="space-y-2">
               <li v-for="(p, i) in stats.topProviders" :key="p._id" class="flex items-center gap-3 text-sm">
                 <span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
-                  :class="i === 0 ? 'bg-amber-100 text-amber-700' : i === 1 ? 'bg-gray-200 text-gray-600' : i === 2 ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-500'">
-                  {{ i + 1 }}
-                </span>
+                  :class="i === 0 ? 'bg-amber-100 text-amber-700' : i === 1 ? 'bg-gray-200 text-gray-600' : i === 2 ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-500'">{{ i + 1 }}</span>
                 <span class="flex-1 truncate font-medium text-gray-800">{{ p.businessName }}</span>
                 <span class="text-yellow-500 shrink-0">★ {{ p.rating?.average }} <span class="text-gray-400">({{ p.rating?.count }})</span></span>
               </li>
@@ -152,23 +229,15 @@ onMounted(async () => {
         </div>
       </div>
 
-      <!-- Gráficas -->
+      <!-- Gráficas clave -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="bg-white rounded-xl shadow p-5">
           <h3 class="font-semibold text-gray-700 mb-3">Solicitudes por día (14d)</h3>
-          <div class="h-64"><canvas :ref="refs.conv"></canvas></div>
+          <div class="h-64"><canvas :ref="refs.day"></canvas></div>
         </div>
         <div class="bg-white rounded-xl shadow p-5">
           <h3 class="font-semibold text-gray-700 mb-3">Servicios más pedidos</h3>
           <div class="h-64"><canvas :ref="refs.services"></canvas></div>
-        </div>
-        <div class="bg-white rounded-xl shadow p-5">
-          <h3 class="font-semibold text-gray-700 mb-3">Horarios con mayor actividad</h3>
-          <div class="h-64"><canvas :ref="refs.hours"></canvas></div>
-        </div>
-        <div class="bg-white rounded-xl shadow p-5">
-          <h3 class="font-semibold text-gray-700 mb-3">Crecimiento de profesionales (14d)</h3>
-          <div class="h-64"><canvas :ref="refs.growth"></canvas></div>
         </div>
       </div>
     </template>
