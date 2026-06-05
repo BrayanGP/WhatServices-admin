@@ -224,6 +224,31 @@ export const useAdminStore = defineStore('admin', () => {
     return res.json()
   }
 
+  // ----- Intenciones del bot -----
+  const fetchIntents = async () => (await auth.authFetch(`${API}/admin/bot/intents`)).json()
+
+  const createIntent = async (data) => {
+    const res = await auth.authFetch(`${API}/admin/bot/intents`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data),
+    })
+    if (!res.ok) throw new Error((await res.json()).message || 'Error')
+    return res.json()
+  }
+
+  const updateIntent = async (id, data) => {
+    const res = await auth.authFetch(`${API}/admin/bot/intents/${id}`, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data),
+    })
+    if (!res.ok) throw new Error((await res.json()).message || 'Error')
+    return res.json()
+  }
+
+  const deleteIntent = async (id) => {
+    const res = await auth.authFetch(`${API}/admin/bot/intents/${id}`, { method: 'DELETE' })
+    if (!res.ok) throw new Error((await res.json()).message || 'Error')
+    return res.json()
+  }
+
   return {
     fetchProviders, toggleVerify, toggleBlockProvider, resetProviderPassword,
     fetchUsers, toggleBlockUser, createUser, updateUserRole, resetUserPassword,
@@ -233,6 +258,7 @@ export const useAdminStore = defineStore('admin', () => {
     fetchInstances, createInstance, connectInstance, instanceState,
     logoutInstance, deleteInstance, setActiveInstance,
     fetchBotConfig, updateBotConfig,
+    fetchIntents, createIntent, updateIntent, deleteIntent,
     fetchStats,
     fetchRequests, fetchRequest, updateRequest,
   }
