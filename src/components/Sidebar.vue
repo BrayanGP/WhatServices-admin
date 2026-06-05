@@ -1,6 +1,7 @@
 <script setup>
 import { useAuthStore } from '../stores/auth'
 import { useRouter } from 'vue-router'
+import miLogo from '../assets/logoWhatServices.png'
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -25,24 +26,31 @@ const logout = async () => {
 </script>
 
 <template>
-  <aside class="w-56 bg-gray-900 text-white flex flex-col min-h-screen shrink-0">
-    <div class="p-4 border-b border-gray-700">
-      <h1 class="text-lg font-bold text-blue-400">WhatServices</h1>
-      <p class="text-xs text-gray-400 mt-0.5">Panel de administración</p>
+  <aside class="w-56 bg-brand-dark text-white flex flex-col min-h-screen shrink-0">
+    <div class="p-4 border-b border-white/10 flex items-center gap-3">
+      <div class="h-10 w-10 rounded-full bg-white flex items-center justify-center shrink-0 overflow-hidden shadow-sm">
+        <img :src="miLogo" alt="WhatServices" class="h-8 w-8 object-contain" />
+      </div>
+      <div>
+        <h1 class="text-base font-bold leading-tight">
+          <span class="text-white">What</span><span class="text-brand-base">Services</span>
+        </h1>
+        <p class="text-[10px] text-gray-400">Panel de administración</p>
+      </div>
     </div>
     <nav class="flex-1 p-3 space-y-1">
       <router-link
         v-for="link in links"
         :key="link.to"
         :to="link.to"
-        class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-colors text-sm"
-        :class="{ 'bg-blue-600 text-white': $route.path === link.to }"
+        class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-300 hover:bg-white/10 hover:text-white transition-colors text-sm"
+        :class="{ 'bg-brand-green text-white shadow-sm': $route.path === link.to }"
       >
         <span>{{ link.icon }}</span>
         <span>{{ link.label }}</span>
       </router-link>
     </nav>
-    <div class="p-4 border-t border-gray-700">
+    <div class="p-4 border-t border-white/10">
       <p class="text-xs text-gray-400 mb-2 truncate">{{ auth.user?.name }}</p>
       <button @click="logout" class="text-xs text-red-400 hover:text-red-300">Cerrar sesión</button>
     </div>

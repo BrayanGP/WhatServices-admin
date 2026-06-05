@@ -31,15 +31,15 @@ const toggle = async (cat) => {
   <div class="p-8">
     <div class="flex items-center justify-between mb-6">
       <h1 class="text-2xl font-bold text-gray-800">Categorías</h1>
-      <button @click="adding = !adding" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700">
+      <button @click="adding = !adding" class="bg-brand-green text-white px-4 py-2 rounded-lg text-sm hover:bg-brand-lightGreen">
         + Agregar
       </button>
     </div>
 
     <div v-if="adding" class="bg-white rounded-xl shadow p-4 mb-4 flex gap-3 items-center">
-      <input v-model="newCat.name" placeholder="Nombre de categoría" class="border rounded-lg px-3 py-2 text-sm flex-1 focus:outline-none focus:ring-2 focus:ring-blue-300" />
-      <input v-model="newCat.icon" placeholder="Emoji" class="border rounded-lg px-3 py-2 text-sm w-24 text-center focus:outline-none focus:ring-2 focus:ring-blue-300" />
-      <button @click="add" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700">Guardar</button>
+      <input v-model="newCat.name" placeholder="Nombre de categoría" class="border rounded-lg px-3 py-2 text-sm flex-1 focus:outline-none focus:ring-2 focus:ring-brand-lightGreen" />
+      <input v-model="newCat.icon" placeholder="Emoji" class="border rounded-lg px-3 py-2 text-sm w-24 text-center focus:outline-none focus:ring-2 focus:ring-brand-lightGreen" />
+      <button @click="add" class="bg-brand-green text-white px-4 py-2 rounded-lg text-sm hover:bg-brand-lightGreen">Guardar</button>
       <button @click="adding = false" class="text-gray-400 text-sm hover:text-gray-600">Cancelar</button>
     </div>
 

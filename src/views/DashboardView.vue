@@ -91,7 +91,7 @@ const updatedAgo = () => {
   return s < 60 ? `actualizado hace ${s}s` : `actualizado hace ${Math.floor(s / 60)} min`
 }
 const statusClass = (s) => ({
-  nueva: 'bg-blue-100 text-blue-700', contactado: 'bg-amber-100 text-amber-700',
+  nueva: 'bg-blue-100 text-brand-medium', contactado: 'bg-amber-100 text-amber-700',
   asignada: 'bg-purple-100 text-purple-700', completada: 'bg-green-100 text-green-700',
   cancelada: 'bg-gray-200 text-gray-500',
 }[s] || 'bg-gray-100 text-gray-600')
@@ -148,7 +148,7 @@ onUnmounted(() => {
             <span class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">nuevas</span>
           </div>
           <p class="text-sm text-gray-500 mt-1">Solicitudes nuevas <span class="text-gray-400">· {{ stats.ops.requestsToday }} hoy</span></p>
-          <router-link to="/requests" class="inline-block mt-3 text-sm text-blue-600 font-medium hover:underline">Ver solicitudes →</router-link>
+          <router-link to="/requests" class="inline-block mt-3 text-sm text-brand-green font-medium hover:underline">Ver solicitudes →</router-link>
         </div>
         <div class="bg-white rounded-xl shadow p-5 border-l-4 border-purple-400">
           <div class="flex items-start justify-between">
@@ -156,15 +156,15 @@ onUnmounted(() => {
             <span class="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">por aprobar</span>
           </div>
           <p class="text-sm text-gray-500 mt-1">Proveedores por verificar</p>
-          <router-link to="/providers" class="inline-block mt-3 text-sm text-blue-600 font-medium hover:underline">Revisar perfiles →</router-link>
+          <router-link to="/providers" class="inline-block mt-3 text-sm text-brand-green font-medium hover:underline">Revisar perfiles →</router-link>
         </div>
         <div class="bg-white rounded-xl shadow p-5 border-l-4 border-blue-400">
           <div class="flex items-start justify-between">
             <span class="text-4xl font-bold text-gray-800">{{ stats.ops.humanConversations }}</span>
-            <span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">atención</span>
+            <span class="text-xs bg-blue-100 text-brand-medium px-2 py-0.5 rounded-full">atención</span>
           </div>
           <p class="text-sm text-gray-500 mt-1">Conversaciones por atender</p>
-          <router-link to="/conversations" class="inline-block mt-3 text-sm text-blue-600 font-medium hover:underline">Abrir chats →</router-link>
+          <router-link to="/conversations" class="inline-block mt-3 text-sm text-brand-green font-medium hover:underline">Abrir chats →</router-link>
         </div>
       </div>
 
@@ -185,7 +185,7 @@ onUnmounted(() => {
             <div class="flex gap-1">
               <button v-for="t in tabs" :key="t.value" @click="setTab(t.value)"
                 class="text-xs px-2.5 py-1 rounded-full"
-                :class="activeTab === t.value ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'">
+                :class="activeTab === t.value ? 'bg-brand-green text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'">
                 {{ t.label }}
               </button>
             </div>

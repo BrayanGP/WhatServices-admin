@@ -93,7 +93,7 @@ onMounted(load)
     <div class="flex items-center justify-between mb-4">
       <div>
         <h1 class="text-2xl font-bold text-gray-800">WhatsApp · Instancias</h1>
-        <p class="text-sm text-gray-500">Activa: <span class="font-medium text-blue-600">{{ active || '—' }}</span></p>
+        <p class="text-sm text-gray-500">Activa: <span class="font-medium text-brand-green">{{ active || '—' }}</span></p>
       </div>
       <button @click="load" class="text-sm text-gray-500 hover:text-gray-800">↻ Refrescar</button>
     </div>
@@ -122,9 +122,9 @@ onMounted(load)
     <!-- Crear -->
     <div class="bg-white rounded-xl shadow p-4 mb-4 flex gap-2 items-center">
       <input v-model="newName" placeholder="Nombre nueva instancia (ej. whatservices-bot-2)"
-        class="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300" />
+        class="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-lightGreen" />
       <button @click="create" :disabled="creating"
-        class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50">
+        class="bg-brand-green text-white px-4 py-2 rounded-lg text-sm hover:bg-brand-lightGreen disabled:opacity-50">
         {{ creating ? 'Creando...' : '+ Crear y conectar' }}
       </button>
     </div>
@@ -145,12 +145,12 @@ onMounted(load)
           </span>
         </div>
         <div class="flex items-center gap-2 mb-3">
-          <span v-if="active === instName(i)" class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">● Activa</span>
+          <span v-if="active === instName(i)" class="text-xs bg-blue-100 text-brand-medium px-2 py-1 rounded-full">● Activa</span>
         </div>
         <div class="flex flex-wrap gap-2">
           <button @click="showQr(instName(i))" class="text-xs bg-gray-100 px-3 py-1.5 rounded-lg hover:bg-gray-200">QR / Conectar</button>
           <button @click="activate(instName(i))" :disabled="active === instName(i)"
-            class="text-xs bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 disabled:opacity-40">Activar</button>
+            class="text-xs bg-brand-green text-white px-3 py-1.5 rounded-lg hover:bg-brand-lightGreen disabled:opacity-40">Activar</button>
           <button @click="logout(instName(i))" class="text-xs text-amber-600 px-3 py-1.5 rounded-lg hover:bg-amber-50">Logout</button>
           <button @click="remove(instName(i))" class="text-xs text-red-500 px-3 py-1.5 rounded-lg hover:bg-red-50">Eliminar</button>
         </div>
@@ -170,14 +170,14 @@ onMounted(load)
           <p class="text-xs text-gray-500 mb-3">Redirige al número activo en WhatsApp.</p>
           <img :src="`${PUBLIC_BACKEND}/wa/qr`" alt="QR conversación" class="w-44 h-44 mx-auto" />
           <a :href="`${PUBLIC_BACKEND}/wa/qr`" download="qr-conversacion.png"
-            class="inline-block mt-2 text-blue-600 text-sm hover:underline">Descargar</a>
+            class="inline-block mt-2 text-brand-green text-sm hover:underline">Descargar</a>
         </div>
         <div class="bg-white rounded-xl shadow p-5 text-center">
           <p class="font-medium text-gray-800 mb-1">Registro de profesionales</p>
           <p class="text-xs text-gray-500 mb-3">Lleva al formulario para que se registren empleados.</p>
           <img :src="`${PUBLIC_BACKEND}/wa/qr-unete`" alt="QR registro" class="w-44 h-44 mx-auto" />
           <a :href="`${PUBLIC_BACKEND}/wa/qr-unete`" download="qr-registro-empleados.png"
-            class="inline-block mt-2 text-blue-600 text-sm hover:underline">Descargar</a>
+            class="inline-block mt-2 text-brand-green text-sm hover:underline">Descargar</a>
         </div>
       </div>
     </div>
@@ -192,7 +192,7 @@ onMounted(load)
         <p v-if="qr.code" class="text-[11px] text-gray-400 mt-3 break-all">Código: {{ qr.code }}</p>
         <div class="mt-4 flex gap-2 justify-center">
           <button @click="showQr(qr.name)" class="text-sm bg-gray-100 px-4 py-2 rounded-lg hover:bg-gray-200">Refrescar QR</button>
-          <button @click="qr = null" class="text-sm bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">Cerrar</button>
+          <button @click="qr = null" class="text-sm bg-brand-green text-white px-4 py-2 rounded-lg hover:bg-brand-lightGreen">Cerrar</button>
         </div>
       </div>
     </div>

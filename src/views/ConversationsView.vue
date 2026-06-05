@@ -63,7 +63,7 @@ onMounted(loadList)
           :key="c._id"
           @click="open(c)"
           class="w-full text-left px-4 py-3 border-b hover:bg-gray-50"
-          :class="{ 'bg-blue-50': selected && selected._id === c._id }"
+          :class="{ 'bg-brand-base/10': selected && selected._id === c._id }"
         >
           <div class="flex justify-between items-center">
             <span class="font-medium text-gray-800 text-sm">{{ c.name || c.phone }}</span>
@@ -72,7 +72,7 @@ onMounted(loadList)
           <div class="text-xs text-gray-500">{{ c.phone }}</div>
           <div class="flex gap-2 mt-1">
             <span class="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{{ stepLabel(c.step) }}</span>
-            <span v-if="c.selectedService" class="text-[10px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">{{ c.selectedService }}</span>
+            <span v-if="c.selectedService" class="text-[10px] bg-brand-base/10 text-brand-medium px-2 py-0.5 rounded-full">{{ c.selectedService }}</span>
             <span v-if="c.humanTakeover" class="text-[10px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">Humano</span>
           </div>
         </button>
@@ -113,7 +113,7 @@ onMounted(loadList)
                 class="max-w-[75%] px-3 py-2 rounded-2xl text-sm"
                 :class="{
                   'bg-white border text-gray-800': m.from === 'client',
-                  'bg-blue-600 text-white': m.from === 'bot',
+                  'bg-brand-green text-white': m.from === 'bot',
                   'bg-green-600 text-white': m.from === 'agent',
                 }"
               >
@@ -130,12 +130,12 @@ onMounted(loadList)
               v-model="replyText"
               @keyup.enter="send"
               placeholder="Escribe un mensaje..."
-              class="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+              class="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-lightGreen"
             />
             <button
               @click="send"
               :disabled="sending"
-              class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50"
+              class="bg-brand-green text-white px-4 py-2 rounded-lg text-sm hover:bg-brand-lightGreen disabled:opacity-50"
             >
               {{ sending ? '...' : 'Enviar' }}
             </button>

@@ -79,7 +79,7 @@ const save = async () => {
           <div class="flex flex-wrap gap-2">
             <button v-for="d in DAYS" :key="d.v" @click="toggleDay(d.v)"
               class="text-xs px-3 py-1.5 rounded-full border"
-              :class="cfg.hours.days.includes(d.v) ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300'">
+              :class="cfg.hours.days.includes(d.v) ? 'bg-brand-green text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300'">
               {{ d.l }}
             </button>
           </div>
@@ -103,7 +103,7 @@ const save = async () => {
 
       <div class="flex items-center gap-3">
         <button @click="save" :disabled="saving"
-          class="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50">
+          class="bg-brand-green text-white px-5 py-2 rounded-lg hover:bg-brand-lightGreen disabled:opacity-50">
           {{ saving ? 'Guardando...' : 'Guardar cambios' }}
         </button>
         <span class="text-sm text-gray-500">{{ msg }}</span>

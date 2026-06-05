@@ -37,7 +37,7 @@ const block = async (u) => {
             <td class="px-4 py-3 font-medium text-gray-800">{{ u.name }}</td>
             <td class="px-4 py-3 text-gray-500">{{ u.email }}</td>
             <td class="px-4 py-3">
-              <span class="capitalize text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-full">{{ u.role }}</span>
+              <span class="capitalize text-xs bg-brand-base/10 text-brand-medium px-2 py-1 rounded-full">{{ u.role }}</span>
             </td>
             <td class="px-4 py-3">
               <span :class="u.isBlocked ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'" class="text-xs px-2 py-1 rounded-full">

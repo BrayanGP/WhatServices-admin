@@ -12,7 +12,7 @@ const saving = ref(false)
 
 const STATUSES = ['nueva', 'contactado', 'asignada', 'completada', 'cancelada']
 const statusClass = (s) => ({
-  nueva: 'bg-blue-100 text-blue-700',
+  nueva: 'bg-blue-100 text-brand-medium',
   contactado: 'bg-amber-100 text-amber-700',
   asignada: 'bg-purple-100 text-purple-700',
   completada: 'bg-green-100 text-green-700',
@@ -86,7 +86,7 @@ onMounted(load)
           <tbody>
             <tr v-for="r in requests" :key="r._id" @click="open(r)"
               class="border-t hover:bg-gray-50 cursor-pointer"
-              :class="{ 'bg-blue-50': selected && selected._id === r._id }">
+              :class="{ 'bg-brand-base/10': selected && selected._id === r._id }">
               <td class="px-4 py-3 font-medium text-gray-800">{{ r.name || r.phone }}</td>
               <td class="px-4 py-3">{{ r.service }}</td>
               <td class="px-4 py-3 text-gray-500">{{ r.postalCode || '—' }}</td>
