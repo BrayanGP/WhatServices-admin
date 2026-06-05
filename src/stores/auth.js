@@ -62,5 +62,36 @@ export const useAuthStore = defineStore('auth', () => {
     return res
   }
 
-  return { accessToken, user, isLoggedIn, modules, canAccess, login, logout, authFetch }
+  // ----- Cuenta personal -----
+  const fetchMe = async () => (await authFetch(`${API}/auth/me`)).json()
+
+  const saveProfile = async (data) => {
+    const res = await authFetch(`${API}/auth/profile`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data),
+    })
+    const out = await res.json()
+    if (res.ok && user.value) { user.value = { ...user.value, name: out.name }; localStorage.setItem('user', JSON.stringify(user.value)) }
+    return out
+  }
+
+  const changePassword = async (currentPassword, newPassword) => {
+    const res = await authFetch(`${API}/auth/password`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ currentPassword, newPassword }),
+    })
+    if (!res.ok) throw new Error((await res.json()).message || 'Error')
+    return res.json()
+  }
+
+  const uploadAvatar = async (file) => {
+    const fd = new FormData(); fd.append('photo', file)
+    const res = await authFetch(`${API}/auth/avatar`, { method: 'POST', body: fd })
+    const out = await res.json()
+    if (res.ok && user.value) { user.value = { ...user.value, avatar: out.avatar }; localStorage.setItem('user', JSON.stringify(user.value)) }
+    return out
+  }
+
+  return {
+    accessToken, user, isLoggedIn, modules, canAccess, login, logout, authFetch,
+    fetchMe, saveProfile, changePassword, uploadAvatar,
+  }
 })

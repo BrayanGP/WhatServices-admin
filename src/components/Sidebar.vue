@@ -18,11 +18,11 @@ const allLinks = [
   { to: '/bot', label: 'Bot', icon: '🤖', module: 'bot' },
   { to: '/subscriptions', label: 'Suscripciones', icon: '💳', module: 'subscriptions' },
   { to: '/categories', label: 'Categorías', icon: '🗂️', module: 'categories' },
-  { to: '/settings', label: 'Configuración', icon: '⚙️', module: 'settings' },
+  { to: '/settings', label: 'Configuración', icon: '⚙️', module: 'settings', always: true },
 ]
 
-// Solo los módulos a los que el usuario tiene acceso (admin = todos)
-const links = computed(() => allLinks.filter((l) => auth.canAccess(l.module)))
+// Solo los módulos a los que el usuario tiene acceso (admin = todos). Configuración siempre.
+const links = computed(() => allLinks.filter((l) => l.always || auth.canAccess(l.module)))
 
 const logout = async () => {
   await auth.logout()
