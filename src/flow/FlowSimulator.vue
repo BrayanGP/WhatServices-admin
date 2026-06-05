@@ -8,6 +8,7 @@ const props = defineProps({
   categories: { type: Array, default: () => [] },
   availableCategories: { type: Array, default: () => [] }, // nombres de categorías con proveedores
   intents: { type: Array, default: () => [] },
+  customVars: { type: Object, default: () => ({}) },
 })
 const emit = defineEmits(['close', 'node'])
 
@@ -25,6 +26,7 @@ const graph = () => ({
 })
 
 const helpers = computed(() => ({
+  customVars: props.customVars,
   servicesList: props.categories.map((c) => `• ${c.name}`).join('\n'),
   servicesCount: props.categories.length,
   servicesAvailable: props.categories.filter((c) => props.availableCategories.includes(c.name)).map((c) => `• ${c.name}`).join('\n'),

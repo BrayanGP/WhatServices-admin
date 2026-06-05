@@ -103,6 +103,7 @@ export const advance = (graph, state, input, helpers) => {
   try { timeStr = new Intl.DateTimeFormat('es-MX', { hour: '2-digit', minute: '2-digit' }).format(now) } catch (e) { timeStr = now.toLocaleTimeString() }
 
   const fillVars = () => ({
+    ...(helpers.customVars || {}),
     name: ctx.name, firstName, greeting, phone: '521555000000', intent: ctx.intent,
     service: ctx.service || '', cp: ctx.cp || '', count: ctx.resultsCount || 0,
     services: helpers.servicesList || '', servicesCount: helpers.servicesCount || 0,
@@ -155,7 +156,8 @@ export const advance = (graph, state, input, helpers) => {
     if (node.type === 'message') { bot(fill(d.text, fillVars())); current = getNext(node.id); continue }
 
     if (node.type === 'ask') {
-      bot(fill(d.text, fillVars()))
+      if (d.text) bot(fill(d.text, fillVars()))
+      else note('💬 El bot espera tu respuesta — escribe algo abajo.')
       return { bubbles, state: { ...state, nodeId: node.id, vars, service: ctx.service, cp: ctx.cp, resultsCount: ctx.resultsCount }, awaiting: { type: 'ask' } }
     }
 
@@ -186,7 +188,9 @@ export const advance = (graph, state, input, helpers) => {
       }
       if (a === 'sendCatalog') {
         ctx.resultsCount = ctx.resultsCount || 3
-        note('📇 (simulado) Envía catálogo: 3 proveedores con foto, rating y contacto')
+        note('📇 (simulado) Envía catálogo con foto, rating y contacto de cada proveedor')
+        bot('*Top proveedores:*\n1. Juan Pérez ⭐ 4.8\n2. Construcciones MX ⭐ 4.6\n3. ServiPro ⭐ 4.5')
+        bot('👉 Responde con el *número* (1-3) para ver sus trabajos, o escribe *otro* para una nueva búsqueda.')
         current = getNext(node.id, 'found'); continue
       }
       if (a === 'startRequest') { note('📝 (simulado) Registra la solicitud'); current = getNext(node.id); continue }

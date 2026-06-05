@@ -39,7 +39,10 @@ const intentsList = ref([])
 const categoriesList = ref([])
 const availableCats = ref([])
 const customTemplates = ref([])
+const customVars = ref([])
+const savingVars = ref(false)
 const TEMPLATES_ = TEMPLATES
+const customVarsObj = computed(() => Object.fromEntries(customVars.value.filter((v) => v.key && v.key.trim()).map((v) => [v.key.trim(), v.value])))
 const FLOW_VARS_ = FLOW_VARS
 const groupedPalette = PALETTE_GROUPS.map((g) => ({ g, items: PALETTE.filter((p) => p.group === g) }))
 
@@ -54,6 +57,18 @@ const fitAll = () => { try { fitView({ padding: 0.2 }) } catch (e) {} }
 const intentsOpen = ref(false)
 const openIntents = () => { intentsOpen.value = true }
 const onIntentsChanged = async () => { intentsList.value = await store.fetchIntents().catch(() => intentsList.value) }
+
+// Variables propias
+const addVar = () => customVars.value.push({ key: '', value: '' })
+const removeVar = (i) => customVars.value.splice(i, 1)
+const saveVars = async () => {
+  savingVars.value = true
+  try {
+    await store.updateBotConfig({ variables: customVars.value.filter((v) => v.key && v.key.trim()) })
+    flash('💾 Variables guardadas')
+  } catch (e) { flash('No se pudieron guardar las variables') }
+  finally { savingVars.value = false }
+}
 
 const selectedNode = computed(() => nodes.value.find((n) => n.id === selectedId.value) || null)
 
@@ -73,16 +88,18 @@ const ensureStart = () => {
 
 onMounted(async () => {
   try {
-    const [r, ints, cats, provs, tpls] = await Promise.all([
+    const [r, ints, cats, provs, tpls, cfg] = await Promise.all([
       store.fetchFlow(),
       store.fetchIntents().catch(() => []),
       store.fetchCategories().catch(() => []),
       store.fetchProviders({ limit: 1000 }).catch(() => ({ providers: [] })),
       store.fetchFlowTemplates().catch(() => []),
+      store.fetchBotConfig().catch(() => ({})),
     ])
     isPublished.value = !!r.isPublished
     intentsList.value = ints || []
     customTemplates.value = tpls || []
+    customVars.value = (cfg.variables || []).map((v) => ({ key: v.key, value: v.value }))
     categoriesList.value = Array.isArray(cats) ? cats : (cats.categories || [])
     const provList = (provs.providers || []).filter((p) => p.availability === 'available' && !p.isBlocked)
     availableCats.value = [...new Set(provList.flatMap((p) => p.categories || []))]
@@ -261,6 +278,24 @@ const clearAll = () => {
             <p class="text-[11px] text-gray-500 pt-1 border-t border-brand-green/20 mt-1">
               También puedes usar lo que guardes en una <b>Pregunta</b>: <code class="text-brand-medium">{tu_variable}</code>.
             </p>
+
+            <!-- Mis variables -->
+            <div class="pt-2 border-t border-brand-green/20 mt-1">
+              <p class="text-[11px] font-medium text-brand-dark mb-1">⭐ Mis variables</p>
+              <p class="text-[11px] text-gray-500 mb-2">Crea constantes (ej. <code class="text-brand-medium">empresa</code> = WhatServices) y úsalas como <code class="text-brand-medium">{empresa}</code>.</p>
+              <div v-for="(v, i) in customVars" :key="i" class="flex items-center gap-1 mb-1">
+                <input v-model="v.key" placeholder="clave" class="w-24 border border-gray-300 rounded px-1.5 py-1 text-xs font-mono" />
+                <span class="text-gray-400 text-xs">=</span>
+                <input v-model="v.value" placeholder="valor" class="flex-1 border border-gray-300 rounded px-1.5 py-1 text-xs" />
+                <button @click="removeVar(i)" class="text-red-400 text-xs px-1">✕</button>
+              </div>
+              <div class="flex items-center gap-2 mt-1">
+                <button @click="addVar" class="text-xs text-brand-green font-medium hover:underline">+ variable</button>
+                <button @click="saveVars" :disabled="savingVars" class="text-xs px-2 py-1 rounded bg-brand-green text-white hover:bg-brand-lightGreen disabled:opacity-50">
+                  {{ savingVars ? 'Guardando…' : 'Guardar variables' }}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -502,7 +537,8 @@ const clearAll = () => {
 
     <!-- Panel: simulador de teléfono -->
     <FlowSimulator v-if="simOpen" :nodes="nodes" :edges="edges" :categories="categoriesList"
-      :available-categories="availableCats" :intents="intentsList" @node="highlightNode" @close="closeSim" />
+      :available-categories="availableCats" :intents="intentsList" :custom-vars="customVarsObj"
+      @node="highlightNode" @close="closeSim" />
   </div>
 </template>
 
