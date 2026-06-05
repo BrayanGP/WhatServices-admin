@@ -103,9 +103,36 @@ const soporte = () => ({
   ],
 })
 
+// Catálogo con carrusel: carrusel de los 5 → elegir número → sus trabajos → volver
+const catalogo = () => ({
+  nodes: [
+    { id: 'start', type: 'start', position: { x: 320, y: 0 }, data: {} },
+    { id: 'ask_service', type: 'ask', position: { x: 280, y: 110 }, data: { text: '¡{greeting}! 👋 ¿Qué servicio necesitas?\n\n{servicesAvailable}', saveAs: 'serviceText', capture: 'text' } },
+    { id: 'act_match', type: 'action', position: { x: 300, y: 230 }, data: { action: 'matchService', params: {} } },
+    { id: 'msg_noservice', type: 'message', position: { x: 30, y: 230 }, data: { text: 'No reconocí ese servicio 🤔. Intenta de nuevo:\n\n{servicesAvailable}' } },
+    { id: 'cat', type: 'carousel', position: { x: 330, y: 350 }, data: { source: 'topRated', cards: [] } },
+    { id: 'ask_pick', type: 'ask', position: { x: 330, y: 470 }, data: { text: 'Responde con el *número* del proveedor para ver sus trabajos 👷, o escribe *otro* para una nueva búsqueda.', saveAs: 'pick', capture: 'text' } },
+    { id: 'act_works', type: 'action', position: { x: 330, y: 590 }, data: { action: 'showWorks', params: {} } },
+  ],
+  edges: [
+    { id: 'e1', source: 'start', target: 'ask_service' },
+    { id: 'e2', source: 'ask_service', target: 'act_match' },
+    { id: 'e3', source: 'act_match', target: 'cat', sourceHandle: 'matched', label: 'Sí reconoció' },
+    { id: 'e4', source: 'act_match', target: 'msg_noservice', sourceHandle: 'notMatched', label: 'No reconoció' },
+    { id: 'e5', source: 'msg_noservice', target: 'ask_service' },
+    { id: 'e6', source: 'cat', target: 'ask_pick' },
+    { id: 'e7', source: 'ask_pick', target: 'act_works' },
+    { id: 'e8', source: 'act_works', target: 'ask_pick', sourceHandle: 'shown', label: 'Mostró trabajos' },
+    { id: 'e9', source: 'act_works', target: 'cat', sourceHandle: 'back', label: 'Volver al catálogo' },
+    { id: 'e10', source: 'act_works', target: 'ask_service', sourceHandle: 'menu', label: 'Otro servicio' },
+    { id: 'e11', source: 'act_works', target: 'ask_pick', sourceHandle: 'none', label: 'No entendió' },
+  ],
+})
+
 export const TEMPLATES = [
   { id: 'default', name: 'Flujo completo', icon: '🤖', description: 'El bot estándar: servicio → cercanos/mejor calificados → catálogo → ver trabajos.', build: currentFlowTemplate },
   { id: 'simple', name: 'Búsqueda simple', icon: '⚡', description: 'Pide el servicio y muestra el top 5 mejor calificados.', build: simple },
   { id: 'intenciones', name: 'Con intenciones', icon: '🎯', description: 'Detecta “hablar con humano” y deriva; lo demás busca servicio.', build: intenciones },
   { id: 'soporte', name: 'Soporte / FAQ', icon: '🛟', description: 'Menú de botones + lista de preguntas frecuentes + escalar a humano.', build: soporte },
+  { id: 'catalogo', name: 'Catálogo con carrusel', icon: '🖼️', description: 'Carrusel de los 5 proveedores → eliges número → ves sus trabajos → volver.', build: catalogo },
 ]

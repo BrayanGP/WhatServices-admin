@@ -156,6 +156,19 @@ const serialize = () => ({
 
 const flash = (m) => { status.value = m; setTimeout(() => (status.value = ''), 2800) }
 
+// Exportar el flujo actual como archivo JSON
+const exportJson = () => {
+  const data = JSON.stringify(serialize(), null, 2)
+  const blob = new Blob([data], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `flujo-bot-${new Date().toISOString().slice(0, 10)}.json`
+  document.body.appendChild(a); a.click(); a.remove()
+  URL.revokeObjectURL(url)
+  flash('⬇️ JSON descargado')
+}
+
 const save = async () => {
   try { await store.saveFlow(serialize()); flash('💾 Borrador guardado') }
   catch (e) { flash('Error al guardar') }
@@ -231,6 +244,7 @@ const clearAll = () => {
         <button @click="openIntents" class="text-sm px-2.5 py-1.5 rounded-lg border border-amber-300 text-amber-700 hover:bg-amber-50">🎯 Intenciones</button>
         <button @click="simOpen = true" class="text-sm px-2.5 py-1.5 rounded-lg border border-brand-green text-brand-medium hover:bg-green-50">📱 Probar</button>
         <button @click="galleryOpen = true" class="text-sm px-2.5 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-50">Plantillas</button>
+        <button @click="exportJson" class="text-sm px-2.5 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-50">⬇️ JSON</button>
         <button @click="clearAll" class="text-sm px-2.5 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-50">Limpiar</button>
         <button @click="save" class="text-sm px-2.5 py-1.5 rounded-lg bg-brand-medium text-white hover:opacity-90">Guardar</button>
         <button v-if="!isPublished" @click="publish" class="text-sm px-2.5 py-1.5 rounded-lg bg-brand-green text-white hover:bg-brand-lightGreen">Publicar</button>
