@@ -38,6 +38,48 @@ export const useAdminStore = defineStore('admin', () => {
     return res.json()
   }
 
+  const createUser = async (data) => {
+    const res = await auth.authFetch(`${API}/admin/users`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data),
+    })
+    if (!res.ok) throw new Error((await res.json()).message || 'Error')
+    return res.json()
+  }
+
+  const updateUserRole = async (id, roleId) => {
+    const res = await auth.authFetch(`${API}/admin/users/${id}/role`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ roleId }),
+    })
+    return res.json()
+  }
+
+  const resetUserPassword = async (id) => {
+    const res = await auth.authFetch(`${API}/admin/users/${id}/reset-password`, { method: 'PATCH' })
+    return res.json()
+  }
+
+  // ----- Roles y módulos -----
+  const fetchModules = async () => (await auth.authFetch(`${API}/admin/modules`)).json()
+  const fetchRoles = async () => (await auth.authFetch(`${API}/admin/roles`)).json()
+  const createRole = async (data) => {
+    const res = await auth.authFetch(`${API}/admin/roles`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data),
+    })
+    if (!res.ok) throw new Error((await res.json()).message || 'Error')
+    return res.json()
+  }
+  const updateRole = async (id, data) => {
+    const res = await auth.authFetch(`${API}/admin/roles/${id}`, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data),
+    })
+    return res.json()
+  }
+  const deleteRole = async (id) => {
+    const res = await auth.authFetch(`${API}/admin/roles/${id}`, { method: 'DELETE' })
+    if (!res.ok) throw new Error((await res.json()).message || 'Error')
+    return res.json()
+  }
+
   const fetchCategories = async () => {
     const res = await auth.authFetch(`${API}/admin/categories`)
     return res.json()
@@ -175,7 +217,8 @@ export const useAdminStore = defineStore('admin', () => {
 
   return {
     fetchProviders, toggleVerify, toggleBlockProvider, resetProviderPassword,
-    fetchUsers, toggleBlockUser,
+    fetchUsers, toggleBlockUser, createUser, updateUserRole, resetUserPassword,
+    fetchModules, fetchRoles, createRole, updateRole, deleteRole,
     fetchCategories, createCategory, updateCategory,
     fetchConversations, fetchConversation, toggleTakeover, replyConversation,
     fetchInstances, createInstance, connectInstance, instanceState,

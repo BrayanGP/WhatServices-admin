@@ -119,7 +119,7 @@ onMounted(async () => {
 
     <!-- Modal detalle -->
     <div v-if="selected" class="fixed inset-0 bg-brand-dark/60 backdrop-blur-sm flex items-center justify-center z-20 p-4" @click.self="selected = null">
-      <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+      <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[92vh] overflow-y-auto">
         <!-- Cabecera (degradado garantizado por inline style) -->
         <div class="p-6 text-white relative rounded-t-2xl" :style="{ background: HEADER_BG }">
           <button @click="selected = null" class="absolute top-3 right-4 text-white/70 hover:text-white text-xl">✕</button>

@@ -7,7 +7,11 @@ export const useAuthStore = defineStore('auth', () => {
   const accessToken = ref(localStorage.getItem('accessToken'))
   const user = ref(JSON.parse(localStorage.getItem('user') || 'null'))
 
-  const isLoggedIn = computed(() => !!accessToken.value && user.value?.role === 'admin')
+  const isLoggedIn = computed(() => !!accessToken.value && ['admin', 'staff'].includes(user.value?.role))
+
+  // Módulos a los que tiene acceso (admin = todos)
+  const modules = computed(() => user.value?.modules || [])
+  const canAccess = (key) => user.value?.role === 'admin' || modules.value.includes(key)
 
   const login = async (email, password) => {
     const res = await fetch(`${API}/auth/login`, {
@@ -18,7 +22,7 @@ export const useAuthStore = defineStore('auth', () => {
     })
     if (!res.ok) throw new Error((await res.json()).message)
     const data = await res.json()
-    if (data.user.role !== 'admin') throw new Error('No tienes permisos de administrador')
+    if (!['admin', 'staff'].includes(data.user.role)) throw new Error('No tienes acceso al panel')
     accessToken.value = data.accessToken
     user.value = data.user
     localStorage.setItem('accessToken', data.accessToken)
@@ -58,5 +62,5 @@ export const useAuthStore = defineStore('auth', () => {
     return res
   }
 
-  return { accessToken, user, isLoggedIn, login, logout, authFetch }
+  return { accessToken, user, isLoggedIn, modules, canAccess, login, logout, authFetch }
 })

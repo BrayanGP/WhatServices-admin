@@ -1,4 +1,5 @@
 <script setup>
+import { computed } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import { useRouter } from 'vue-router'
 import miLogo from '../assets/logoWhatServices.png'
@@ -6,18 +7,22 @@ import miLogo from '../assets/logoWhatServices.png'
 const auth = useAuthStore()
 const router = useRouter()
 
-const links = [
-  { to: '/', label: 'Dashboard', icon: '📊' },
-  { to: '/providers', label: 'Proveedores', icon: '🔧' },
-  { to: '/users', label: 'Usuarios', icon: '👥' },
-  { to: '/conversations', label: 'Conversaciones', icon: '💬' },
-  { to: '/requests', label: 'Solicitudes', icon: '📋' },
-  { to: '/whatsapp', label: 'WhatsApp', icon: '📱' },
-  { to: '/bot', label: 'Bot', icon: '🤖' },
-  { to: '/subscriptions', label: 'Suscripciones', icon: '💳' },
-  { to: '/categories', label: 'Categorías', icon: '🗂️' },
-  { to: '/settings', label: 'Configuración', icon: '⚙️' },
+const allLinks = [
+  { to: '/', label: 'Dashboard', icon: '📊', module: 'dashboard' },
+  { to: '/providers', label: 'Proveedores', icon: '🔧', module: 'providers' },
+  { to: '/users', label: 'Usuarios', icon: '👥', module: 'users' },
+  { to: '/roles', label: 'Roles', icon: '🛡️', module: 'roles' },
+  { to: '/conversations', label: 'Conversaciones', icon: '💬', module: 'conversations' },
+  { to: '/requests', label: 'Solicitudes', icon: '📋', module: 'requests' },
+  { to: '/whatsapp', label: 'WhatsApp', icon: '📱', module: 'whatsapp' },
+  { to: '/bot', label: 'Bot', icon: '🤖', module: 'bot' },
+  { to: '/subscriptions', label: 'Suscripciones', icon: '💳', module: 'subscriptions' },
+  { to: '/categories', label: 'Categorías', icon: '🗂️', module: 'categories' },
+  { to: '/settings', label: 'Configuración', icon: '⚙️', module: 'settings' },
 ]
+
+// Solo los módulos a los que el usuario tiene acceso (admin = todos)
+const links = computed(() => allLinks.filter((l) => auth.canAccess(l.module)))
 
 const logout = async () => {
   await auth.logout()
