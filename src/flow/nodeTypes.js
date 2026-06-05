@@ -28,6 +28,8 @@ export const FLOW_VARS = [
   { v: '{servicesCount}', d: 'Cuántas categorías hay' },
   { v: '{servicesAvailable}', d: 'Solo categorías que SÍ tienen proveedores' },
   { v: '{servicesAvailableCount}', d: 'Cuántas tienen proveedores' },
+  { v: '{topRated}', d: 'Top 5 mejor calificados (del servicio si hay)' },
+  { v: '{nearby}', d: '5 más cercanos al CP del cliente' },
   { v: '{service}', d: 'Servicio que eligió' },
   { v: '{count}', d: 'Nº de resultados encontrados' },
   { v: '{cp}', d: 'Código postal capturado' },
@@ -61,7 +63,7 @@ export const makeData = (type) => {
     case 'buttons': return { text: 'Elige una opción:', buttons: [{ id: uid(), label: 'Opción 1' }, { id: uid(), label: 'Opción 2' }] }
     case 'list': return { text: 'Selecciona una opción:', buttonText: 'Ver opciones', footer: '', sections: [{ title: 'Opciones', rows: [{ id: uid(), label: 'Fila 1', description: '' }] }] }
     case 'poll': return { question: '¿Cuál prefieres?', options: [{ id: uid(), label: 'Opción 1' }, { id: uid(), label: 'Opción 2' }], multi: false }
-    case 'carousel': return { cards: [{ image: '', title: 'Tarjeta 1', body: '' }] }
+    case 'carousel': return { source: 'static', cards: [{ image: '', title: 'Tarjeta 1', body: '' }] }
     default: return {}
   }
 }

@@ -459,6 +459,21 @@ const clearAll = () => {
 
           <!-- CAROUSEL -->
           <div v-else-if="selectedNode.type === 'carousel'" class="space-y-3">
+            <div>
+              <label class="text-xs text-gray-600 block mb-1">Fuente de las tarjetas</label>
+              <select v-model="selectedNode.data.source"
+                class="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-sm bg-white focus:border-brand-green outline-none">
+                <option value="static">Estáticas (manuales)</option>
+                <option value="topRated">5 mejor calificados</option>
+                <option value="nearby">5 más cercanos (por CP)</option>
+                <option value="results">Resultados de la última búsqueda</option>
+              </select>
+            </div>
+            <p v-if="(selectedNode.data.source || 'static') !== 'static'" class="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded p-2">
+              Se llenará con la foto de cada proveedor. WhatsApp no permite “click” en imágenes:
+              conecta este carrusel a una <b>Pregunta</b> y luego a la acción <b>“Mostrar trabajos”</b> para que, al responder el número, se vean sus trabajos.
+            </p>
+            <template v-if="(selectedNode.data.source || 'static') === 'static'">
             <p class="text-[11px] text-gray-500">Galería de tarjetas (se envían como secuencia de imágenes con texto).</p>
             <div v-for="(c, i) in selectedNode.data.cards" :key="i" class="border border-gray-200 rounded-lg p-2 space-y-1">
               <div class="flex items-center justify-between">
@@ -470,6 +485,7 @@ const clearAll = () => {
               <textarea v-model="c.body" rows="2" placeholder="Texto" class="w-full border border-gray-300 rounded px-1 py-0.5 text-xs"></textarea>
             </div>
             <button @click="addCard(selectedNode.data)" class="text-xs text-brand-green font-medium hover:underline">+ tarjeta</button>
+            </template>
           </div>
 
           <!-- START / END -->

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAdminStore } from '../stores/admin'
 import IntentsManager from '../components/IntentsManager.vue'
@@ -12,14 +12,13 @@ const cfg = ref(null)
 const loading = ref(true)
 const saving = ref(false)
 const msg = ref('')
-const categories = ref([])
 
 const DAYS = [
   { v: 1, l: 'Lun' }, { v: 2, l: 'Mar' }, { v: 3, l: 'Mié' }, { v: 4, l: 'Jue' },
   { v: 5, l: 'Vie' }, { v: 6, l: 'Sáb' }, { v: 0, l: 'Dom' },
 ]
 
-// Orden de la conversación (flujo del bot)
+// Orden de la conversación (flujo del bot por defecto)
 const FLOW = [
   { icon: '👋', title: 'Bienvenida', desc: 'Saluda y lista los servicios disponibles.', key: 'welcome' },
   { icon: '🛠️', title: 'Elegir servicio', desc: 'El cliente escribe lo que necesita (fuzzy match).', key: 'noService' },
@@ -55,34 +54,8 @@ const varsByMsg = {
   worksNav: '—',
 }
 
-// ---- Intenciones ----
-const intents = ref([])
-const intentErr = ref('')
-const search = ref('')
-const blank = () => ({ name: '', key: '', description: '', examplesText: '', response: '', service: '', priority: 10, active: true })
-const form = ref(blank())
-const editingId = ref(null)
-const savingIntent = ref(false)
-
-const slugify = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
-  .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
-
-const filteredIntents = computed(() => {
-  const q = search.value.trim().toLowerCase()
-  if (!q) return intents.value
-  return intents.value.filter((i) =>
-    [i.name, i.key, i.description, (i.examples || []).join(' ')].join(' ').toLowerCase().includes(q))
-})
-
 onMounted(async () => {
-  const [c, cats, its] = await Promise.all([
-    store.fetchBotConfig(),
-    store.fetchCategories().catch(() => []),
-    store.fetchIntents().catch((e) => { intentErr.value = 'No se pudieron cargar las intenciones del bot.'; return [] }),
-  ])
-  cfg.value = c
-  categories.value = Array.isArray(cats) ? cats : (cats.categories || [])
-  intents.value = its || []
+  cfg.value = await store.fetchBotConfig()
   loading.value = false
 })
 
@@ -105,62 +78,6 @@ const save = async () => {
     setTimeout(() => (msg.value = ''), 2500)
   } catch { msg.value = 'Error al guardar' }
   finally { saving.value = false }
-}
-
-// ---- CRUD intenciones ----
-const onName = () => { if (!editingId.value) form.value.key = slugify(form.value.name) }
-
-const editIntent = (it) => {
-  editingId.value = it._id
-  form.value = {
-    name: it.name, key: it.key, description: it.description || '',
-    examplesText: (it.examples || []).join('\n'), response: it.response || '',
-    service: it.service || '', priority: it.priority ?? 10, active: it.active !== false,
-  }
-  tab.value = 'intenciones'
-  window.scrollTo({ top: 0, behavior: 'smooth' })
-}
-
-const cancelEdit = () => { editingId.value = null; form.value = blank() }
-
-const submitIntent = async () => {
-  if (!form.value.name.trim()) { intentErr.value = 'El nombre es obligatorio'; return }
-  savingIntent.value = true; intentErr.value = ''
-  const payload = {
-    name: form.value.name, key: form.value.key || slugify(form.value.name),
-    description: form.value.description,
-    examples: form.value.examplesText.split('\n').map((s) => s.trim()).filter(Boolean),
-    response: form.value.response, service: form.value.service,
-    priority: Number(form.value.priority) || 10, active: form.value.active,
-  }
-  try {
-    if (editingId.value) {
-      const upd = await store.updateIntent(editingId.value, payload)
-      const i = intents.value.findIndex((x) => x._id === editingId.value)
-      if (i !== -1) intents.value[i] = upd
-    } else {
-      intents.value.unshift(await store.createIntent(payload))
-    }
-    cancelEdit()
-  } catch (e) { intentErr.value = e.message || 'Error al guardar' }
-  finally { savingIntent.value = false }
-}
-
-const removeIntent = async (it) => {
-  if (!confirm(`¿Eliminar la intención "${it.name}"?`)) return
-  try {
-    await store.deleteIntent(it._id)
-    intents.value = intents.value.filter((x) => x._id !== it._id)
-    if (editingId.value === it._id) cancelEdit()
-  } catch (e) { intentErr.value = e.message || 'Error al eliminar' }
-}
-
-const toggleActive = async (it) => {
-  try {
-    const upd = await store.updateIntent(it._id, { active: !it.active })
-    const i = intents.value.findIndex((x) => x._id === it._id)
-    if (i !== -1) intents.value[i] = upd
-  } catch (e) { intentErr.value = e.message || 'Error' }
 }
 </script>
 
@@ -256,6 +173,7 @@ const toggleActive = async (it) => {
               <div v-if="i < FLOW.length - 1" class="hidden md:flex items-center text-gray-300">➜</div>
             </template>
           </div>
+          <p class="text-[11px] text-gray-500 mt-3">¿Quieres cambiar el orden o agregar lógica? Usa el <button class="text-brand-medium underline" @click="router.push('/bot/flow')">constructor de flujo visual</button>.</p>
         </div>
 
         <!-- Variables disponibles -->
@@ -272,7 +190,7 @@ const toggleActive = async (it) => {
             <li><code class="text-brand-medium">{open}</code> / <code class="text-brand-medium">{close}</code> Horario</li>
             <li><code class="text-brand-medium">{phone}</code> Teléfono del cliente</li>
           </ul>
-          <p class="text-[11px] text-gray-500 mt-2">Cada mensaje solo aplica las variables que le corresponden (indicadas abajo).</p>
+          <p class="text-[11px] text-gray-500 mt-2">En el constructor de flujo hay más (saludo, fecha, top calificados, cercanos) y puedes crear las tuyas.</p>
         </div>
 
         <!-- Mensajes -->
@@ -291,116 +209,8 @@ const toggleActive = async (it) => {
 
       <!-- ============ INTENCIONES ============ -->
       <div v-show="tab === 'intenciones'">
-        <IntentsManager @changed="() => {}" />
+        <IntentsManager />
       </div>
-      <template v-if="false">
-        <!-- Formulario -->
-        <div class="md:col-span-2 bg-white rounded-xl shadow p-5 self-start">
-          <p class="font-medium text-brand-dark mb-3">{{ editingId ? 'Editar intención' : 'Nueva intención' }}</p>
-          <div class="space-y-3">
-            <div>
-              <label class="text-xs text-gray-600 block mb-1">Nombre</label>
-              <input v-model="form.name" @input="onName" placeholder="Buscar plomero"
-                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-brand-green outline-none" />
-            </div>
-            <div>
-              <label class="text-xs text-gray-600 block mb-1">Clave</label>
-              <input v-model="form.key" placeholder="buscar-plomero"
-                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono focus:border-brand-green outline-none" />
-            </div>
-            <div>
-              <label class="text-xs text-gray-600 block mb-1">Descripción</label>
-              <textarea v-model="form.description" rows="2"
-                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-brand-green outline-none"></textarea>
-            </div>
-            <div>
-              <label class="text-xs text-gray-600 block mb-1">Frases de ejemplo, una por línea</label>
-              <textarea v-model="form.examplesText" rows="4" placeholder="Necesito un plomero&#10;Busco alguien para una fuga"
-                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-brand-green outline-none"></textarea>
-            </div>
-            <div>
-              <label class="text-xs text-gray-600 block mb-1">Respuesta del bot <span class="text-brand-green font-mono">{name} {service}</span></label>
-              <textarea v-model="form.response" rows="3" placeholder="Claro {name}, te ayudo a encontrar {service}."
-                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-brand-green outline-none"></textarea>
-            </div>
-            <div>
-              <label class="text-xs text-gray-600 block mb-1">Servicio que dispara la búsqueda (opcional)</label>
-              <select v-model="form.service"
-                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:border-brand-green outline-none">
-                <option value="">— Solo responder, sin buscar —</option>
-                <option v-for="c in categories" :key="c._id || c.name" :value="c.name">{{ c.name }}</option>
-              </select>
-            </div>
-            <div class="flex items-center gap-4">
-              <div>
-                <label class="text-xs text-gray-600 block mb-1">Prioridad</label>
-                <input type="number" v-model.number="form.priority"
-                  class="w-24 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-brand-green outline-none" />
-              </div>
-              <label class="flex items-center gap-2 text-sm mt-5">
-                <input type="checkbox" v-model="form.active" class="accent-brand-green" /> Activa
-              </label>
-            </div>
-
-            <p v-if="intentErr" class="text-sm text-red-600">{{ intentErr }}</p>
-
-            <div class="flex gap-2 pt-1">
-              <button @click="submitIntent" :disabled="savingIntent"
-                class="flex-1 bg-brand-green text-white py-2 rounded-lg font-medium hover:bg-brand-lightGreen disabled:opacity-50">
-                {{ savingIntent ? 'Guardando...' : (editingId ? 'Actualizar' : 'Crear intención') }}
-              </button>
-              <button v-if="editingId" @click="cancelEdit"
-                class="px-4 py-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50">Cancelar</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Lista -->
-        <div class="md:col-span-3 bg-white rounded-xl shadow p-5">
-          <div class="flex items-center justify-between gap-3 mb-1">
-            <div>
-              <p class="font-medium text-brand-dark">Intenciones configuradas</p>
-              <p class="text-xs text-gray-500">{{ filteredIntents.length }} de {{ intents.length }} visibles</p>
-            </div>
-            <input v-model="search" placeholder="Buscar intención..."
-              class="border border-gray-300 rounded-lg px-3 py-2 text-sm w-48 focus:border-brand-green outline-none" />
-          </div>
-
-          <p v-if="intentErr && !intents.length" class="text-sm text-red-600 mt-4">{{ intentErr }}</p>
-          <p v-else-if="!filteredIntents.length" class="text-sm text-gray-400 mt-6">No hay intenciones para mostrar.</p>
-
-          <div v-else class="mt-3 space-y-2">
-            <div v-for="it in filteredIntents" :key="it._id"
-              class="border border-gray-200 rounded-lg p-3 hover:border-brand-green/60 hover:shadow-sm transition">
-              <div class="flex items-start justify-between gap-2">
-                <div class="min-w-0">
-                  <div class="flex items-center gap-2">
-                    <span class="font-semibold text-brand-dark truncate">{{ it.name }}</span>
-                    <span class="text-[10px] px-2 py-0.5 rounded-full"
-                      :class="it.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'">
-                      {{ it.active ? 'Activa' : 'Inactiva' }}
-                    </span>
-                    <span class="text-[10px] text-gray-400">P{{ it.priority }}</span>
-                  </div>
-                  <p class="text-xs text-gray-500 font-mono">{{ it.key }}</p>
-                  <p v-if="it.service" class="text-[11px] text-brand-medium mt-0.5">🛠️ Busca: {{ it.service }}</p>
-                  <p v-if="(it.examples||[]).length" class="text-[11px] text-gray-500 mt-1 truncate">
-                    Ej: {{ (it.examples || []).slice(0, 3).join(' · ') }}
-                  </p>
-                </div>
-                <div class="flex items-center gap-1 shrink-0">
-                  <button @click="toggleActive(it)" :title="it.active ? 'Desactivar' : 'Activar'"
-                    class="text-xs px-2 py-1 rounded hover:bg-gray-100">{{ it.active ? '⏸️' : '▶️' }}</button>
-                  <button @click="editIntent(it)" title="Editar"
-                    class="text-xs px-2 py-1 rounded hover:bg-gray-100">✏️</button>
-                  <button @click="removeIntent(it)" title="Eliminar"
-                    class="text-xs px-2 py-1 rounded hover:bg-red-50 text-red-500">🗑️</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </template>
 
       <!-- Guardar (general / mensajes) -->
       <div v-if="tab !== 'intenciones'" class="flex items-center gap-3 mt-5">

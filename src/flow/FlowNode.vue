@@ -27,7 +27,11 @@ const summary = computed(() => {
   if (props.type === 'buttons') return `${(d.text || '').slice(0, 50)}\n[${(d.buttons || []).map((b) => b.label).join(' · ')}]`
   if (props.type === 'list') return `${(d.text || '').slice(0, 50)}\n📋 ${(d.sections || []).flatMap((s) => s.rows || []).length} fila(s)`
   if (props.type === 'poll') return `📊 ${d.question || ''}\n[${(d.options || []).map((o) => o.label).join(' · ')}]`
-  if (props.type === 'carousel') return `🖼️ ${(d.cards || []).length} tarjeta(s)`
+  if (props.type === 'carousel') {
+    const src = d.source || 'static'
+    if (src !== 'static') return `🖼️ Dinámico: ${{ topRated: 'mejor calificados', nearby: 'más cercanos', results: 'resultados' }[src] || src}`
+    return `🖼️ ${(d.cards || []).length} tarjeta(s)`
+  }
   if (props.type === 'start') return 'Punto de entrada'
   if (props.type === 'end') return 'Fin de la conversación'
   return ''

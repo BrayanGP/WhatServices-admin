@@ -76,7 +76,12 @@ export const advance = (graph, state, input, helpers) => {
   const nodeMap = Object.fromEntries(nodes.map((n) => [n.id, n]))
   const getNext = (id, handle) => {
     const outs = edges.filter((e) => e.source === id)
-    if (handle) { const e = outs.find((x) => x.sourceHandle === handle); return e ? nodeMap[e.target] : null }
+    if (handle) {
+      const e = outs.find((x) => x.sourceHandle === handle)
+      if (e) return nodeMap[e.target]
+      const d = outs.find((x) => !x.sourceHandle)
+      return d ? nodeMap[d.target] : null
+    }
     const e = outs.find((x) => !x.sourceHandle) || outs[0]
     return e ? nodeMap[e.target] : null
   }
@@ -108,6 +113,8 @@ export const advance = (graph, state, input, helpers) => {
     service: ctx.service || '', cp: ctx.cp || '', count: ctx.resultsCount || 0,
     services: helpers.servicesList || '', servicesCount: helpers.servicesCount || 0,
     servicesAvailable: helpers.servicesAvailable || '', servicesAvailableCount: helpers.servicesAvailableCount || 0,
+    topRated: '1. Juan Pérez ⭐4.8\n2. Construcciones MX ⭐4.6\n3. ServiPro ⭐4.5', topRatedCount: 3,
+    nearby: '1. Taller El Vecino ⭐4.7\n2. ServiRápido ⭐4.4\n3. Manos a la Obra ⭐4.3', nearbyCount: 3,
     date: dateStr, time: timeStr, open: 8, close: 20, ...ctx.vars,
   })
 
@@ -224,7 +231,15 @@ export const advance = (graph, state, input, helpers) => {
     }
 
     if (node.type === 'carousel') {
-      (d.cards || []).forEach((c) => note(`🖼️ ${c.title || 'Tarjeta'}${c.body ? ' — ' + c.body : ''}`))
+      const src = d.source || 'static'
+      if (src === 'static') {
+        (d.cards || []).forEach((c) => note(`🖼️ ${fill(c.title, fillVars()) || 'Tarjeta'}${c.body ? ' — ' + fill(c.body, fillVars()) : ''}`))
+      } else {
+        ctx.resultsCount = 3
+        note('🖼️ (simulado) Carrusel de proveedores')
+        bot('🖼️ 1. Juan Pérez ⭐4.8\n🖼️ 2. Construcciones MX ⭐4.6\n🖼️ 3. ServiPro ⭐4.5')
+        bot('👉 Responde el número para ver sus trabajos.')
+      }
       current = getNext(node.id); continue
     }
 
