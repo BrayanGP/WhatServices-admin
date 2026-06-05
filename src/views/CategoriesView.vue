@@ -33,9 +33,21 @@ const toggle = async (cat) => {
 const editing = ref(null)
 const savingEdit = ref(false)
 const editErr = ref('')
+const showIcons = ref(false)
+
+// Íconos sugeridos para categorías de servicios
+const ICONS = [
+  '🔧', '🔨', '🪚', '⚡', '🚰', '🚿', '💧', '🧹', '🧼', '🛠️', '🪛', '🪠', '🧰', '🪜', '🏠', '🚪',
+  '🪟', '🛏️', '🚗', '🛞', '🎨', '🧱', '🌿', '🌳', '✂️', '💈', '🍫', '🍭', '🧊', '📦', '🐾', '🔥',
+  '❄️', '💡', '🔌', '🏗️', '👷', '⚖️', '📚', '💻', '📱', '🦷', '💄', '💅', '📸', '🎂', '🍳', '🪴',
+  '🧯', '🔑', '🚧', '🧽', '🪣', '🧴',
+]
+const pickIcon = (e) => { if (editing.value) editing.value.icon = e; showIcons.value = false }
+const showIconsAdd = ref(false)
+const pickIconAdd = (e) => { newCat.value.icon = e; showIconsAdd.value = false }
 
 const openEdit = (cat) => {
-  editErr.value = ''
+  editErr.value = ''; showIcons.value = false
   editing.value = { _id: cat._id, name: cat.name, icon: cat.icon || '', slug: cat.slug || '', isActive: cat.isActive !== false }
 }
 const regenSlug = () => { if (editing.value) editing.value.slug = slugify(editing.value.name) }
@@ -73,11 +85,19 @@ const review = async (cat, action) => {
     </div>
 
     <!-- Formulario nueva categoría -->
-    <div v-if="adding" class="bg-white rounded-xl shadow p-4 flex gap-3 items-center">
-      <input v-model="newCat.name" placeholder="Nombre de categoría" class="border rounded-lg px-3 py-2 text-sm flex-1 focus:outline-none focus:ring-2 focus:ring-brand-lightGreen" />
-      <input v-model="newCat.icon" placeholder="Emoji" class="border rounded-lg px-3 py-2 text-sm w-24 text-center focus:outline-none focus:ring-2 focus:ring-brand-lightGreen" />
-      <button @click="add" class="bg-brand-green text-white px-4 py-2 rounded-lg text-sm hover:bg-brand-lightGreen">Guardar</button>
-      <button @click="adding = false" class="text-gray-400 text-sm hover:text-gray-600">Cancelar</button>
+    <div v-if="adding" class="bg-white rounded-xl shadow p-4 space-y-3">
+      <div class="flex gap-3 items-center">
+        <input v-model="newCat.name" placeholder="Nombre de categoría" class="border rounded-lg px-3 py-2 text-sm flex-1 focus:outline-none focus:ring-2 focus:ring-brand-lightGreen" />
+        <input v-model="newCat.icon" placeholder="Emoji" class="border rounded-lg px-3 py-2 text-lg w-16 text-center focus:outline-none focus:ring-2 focus:ring-brand-lightGreen" />
+        <button type="button" @click="showIconsAdd = !showIconsAdd" class="px-2 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 text-xs">{{ showIconsAdd ? '▴' : '▾' }}</button>
+        <button @click="add" class="bg-brand-green text-white px-4 py-2 rounded-lg text-sm hover:bg-brand-lightGreen">Guardar</button>
+        <button @click="adding = false" class="text-gray-400 text-sm hover:text-gray-600">Cancelar</button>
+      </div>
+      <div v-if="showIconsAdd" class="border border-gray-200 rounded-lg p-2 grid grid-cols-9 sm:grid-cols-12 gap-1 max-h-40 overflow-y-auto">
+        <button v-for="e in ICONS" :key="e" type="button" @click="pickIconAdd(e)"
+          class="text-xl leading-none rounded p-1 hover:bg-brand-light/70 transition"
+          :class="newCat.icon === e ? 'bg-brand-green/15 ring-1 ring-brand-green' : ''">{{ e }}</button>
+      </div>
     </div>
 
     <!-- Pendientes de aprobación -->
@@ -144,11 +164,7 @@ const review = async (cat, action) => {
               <td class="px-4 py-3 text-gray-400 font-mono text-xs">{{ cat.slug }}</td>
               <td class="px-4 py-3">
                 <span
-                  :class="{
-                    'bg-green-100 text-green-700': cat.isActive && cat.status === 'active',
-                    'bg-gray-100 text-gray-500': !cat.isActive && cat.status !== 'rejected',
-                    'bg-red-100 text-red-500': cat.status === 'rejected',
-                  }"
+                  :class="cat.status === 'rejected' ? 'bg-red-100 text-red-500' : (cat.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500')"
                   class="text-xs px-2 py-1 rounded-full"
                 >
                   {{ cat.status === 'rejected' ? 'Rechazada' : cat.isActive ? 'Activa' : 'Inactiva' }}
@@ -186,8 +202,18 @@ const review = async (cat, action) => {
             </div>
             <div>
               <label class="text-xs text-gray-600 block mb-1">Emoji</label>
-              <input v-model="editing.icon" maxlength="4" class="w-20 border border-gray-300 rounded-lg px-3 py-2 text-sm text-center focus:border-brand-green outline-none" />
+              <div class="flex items-center gap-1">
+                <input v-model="editing.icon" maxlength="4" class="w-14 border border-gray-300 rounded-lg px-2 py-2 text-lg text-center focus:border-brand-green outline-none" />
+                <button type="button" @click="showIcons = !showIcons" class="px-2 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 text-xs">{{ showIcons ? '▴' : '▾' }}</button>
+              </div>
             </div>
+          </div>
+
+          <!-- Selector de íconos -->
+          <div v-if="showIcons" class="border border-gray-200 rounded-lg p-2 grid grid-cols-9 gap-1 max-h-40 overflow-y-auto">
+            <button v-for="e in ICONS" :key="e" type="button" @click="pickIcon(e)"
+              class="text-xl leading-none rounded p-1 hover:bg-brand-light/70 transition"
+              :class="editing.icon === e ? 'bg-brand-green/15 ring-1 ring-brand-green' : ''">{{ e }}</button>
           </div>
           <div>
             <label class="text-xs text-gray-600 block mb-1">Slug</label>
