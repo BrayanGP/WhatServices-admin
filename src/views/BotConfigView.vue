@@ -1,8 +1,10 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAdminStore } from '../stores/admin'
 
 const store = useAdminStore()
+const router = useRouter()
 
 const tab = ref('general') // general | mensajes | intenciones
 const cfg = ref(null)
@@ -175,6 +177,10 @@ const toggleActive = async (it) => {
           :class="tab === t[0] ? 'border-brand-green text-brand-medium' : 'border-transparent text-gray-500 hover:text-gray-700'"
           class="px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors">
           {{ t[1] }}
+        </button>
+        <button @click="router.push('/bot/flow')"
+          class="px-4 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors ml-auto">
+          🧩 Flujo visual <span class="text-[10px] bg-brand-green text-white px-1.5 py-0.5 rounded-full align-middle">beta</span>
         </button>
       </div>
 

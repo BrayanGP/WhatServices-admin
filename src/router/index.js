@@ -13,6 +13,7 @@ const routes = [
   { path: '/requests', component: () => import('../views/RequestsView.vue'), meta: { requiresAuth: true, module: 'requests' } },
   { path: '/whatsapp', component: () => import('../views/WhatsAppView.vue'), meta: { requiresAuth: true, module: 'whatsapp' } },
   { path: '/bot', component: () => import('../views/BotConfigView.vue'), meta: { requiresAuth: true, module: 'bot' } },
+  { path: '/bot/flow', component: () => import('../views/FlowBuilderView.vue'), meta: { requiresAuth: true, module: 'bot' } },
   { path: '/settings', component: () => import('../views/SettingsView.vue'), meta: { requiresAuth: true } },
 ]
 

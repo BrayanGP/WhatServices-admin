@@ -249,6 +249,31 @@ export const useAdminStore = defineStore('admin', () => {
     return res.json()
   }
 
+  // ----- Flujo visual del bot -----
+  const fetchFlow = async () => (await auth.authFetch(`${API}/admin/bot/flow`)).json()
+
+  const saveFlow = async (graph) => {
+    const res = await auth.authFetch(`${API}/admin/bot/flow`, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(graph),
+    })
+    if (!res.ok) throw new Error((await res.json()).message || 'Error')
+    return res.json()
+  }
+
+  const publishFlow = async (graph) => {
+    const res = await auth.authFetch(`${API}/admin/bot/flow/publish`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(graph || {}),
+    })
+    if (!res.ok) throw new Error((await res.json()).message || 'Error')
+    return res.json()
+  }
+
+  const unpublishFlow = async () => {
+    const res = await auth.authFetch(`${API}/admin/bot/flow/unpublish`, { method: 'POST' })
+    if (!res.ok) throw new Error((await res.json()).message || 'Error')
+    return res.json()
+  }
+
   return {
     fetchProviders, toggleVerify, toggleBlockProvider, resetProviderPassword,
     fetchUsers, toggleBlockUser, createUser, updateUserRole, resetUserPassword,
@@ -259,6 +284,7 @@ export const useAdminStore = defineStore('admin', () => {
     logoutInstance, deleteInstance, setActiveInstance,
     fetchBotConfig, updateBotConfig,
     fetchIntents, createIntent, updateIntent, deleteIntent,
+    fetchFlow, saveFlow, publishFlow, unpublishFlow,
     fetchStats,
     fetchRequests, fetchRequest, updateRequest,
   }
