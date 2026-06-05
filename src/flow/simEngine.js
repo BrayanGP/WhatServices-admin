@@ -115,6 +115,8 @@ export const advance = (graph, state, input, helpers) => {
       servicesAvailable: helpers.servicesAvailable || '', servicesAvailableCount: helpers.servicesAvailableCount || 0,
       topRated: '1. Juan Pérez ⭐4.8\n2. Construcciones MX ⭐4.6\n3. ServiPro ⭐4.5', topRatedCount: 3,
       nearby: '1. Taller El Vecino ⭐4.7\n2. ServiRápido ⭐4.4\n3. Manos a la Obra ⭐4.3', nearbyCount: 3,
+      web: 'https://whatservices.app', webProviders: 'https://whatservices.app/providers',
+      webRegister: 'https://whatservices.app/unete', webService: 'https://whatservices.app/providers?category=' + encodeURIComponent(ctx.service || ''),
       date: dateStr, time: timeStr, open: 8, close: 20, ...ctx.vars,
     }
     const cv = helpers.customVars || {}
