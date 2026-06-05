@@ -22,6 +22,11 @@ export const useAdminStore = defineStore('admin', () => {
     return res.json()
   }
 
+  const resetProviderPassword = async (id) => {
+    const res = await auth.authFetch(`${API}/admin/providers/${id}/reset-password`, { method: 'PATCH' })
+    return res.json()
+  }
+
   const fetchUsers = async (params = {}) => {
     const q = new URLSearchParams(params).toString()
     const res = await auth.authFetch(`${API}/admin/users?${q}`)
@@ -169,7 +174,7 @@ export const useAdminStore = defineStore('admin', () => {
   }
 
   return {
-    fetchProviders, toggleVerify, toggleBlockProvider,
+    fetchProviders, toggleVerify, toggleBlockProvider, resetProviderPassword,
     fetchUsers, toggleBlockUser,
     fetchCategories, createCategory, updateCategory,
     fetchConversations, fetchConversation, toggleTakeover, replyConversation,

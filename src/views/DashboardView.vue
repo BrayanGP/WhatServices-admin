@@ -155,7 +155,7 @@ onUnmounted(() => {
             <span class="text-4xl font-bold text-gray-800">{{ stats.ops.pendingProviders }}</span>
             <span class="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">por aprobar</span>
           </div>
-          <p class="text-sm text-gray-500 mt-1">Profesionales por verificar</p>
+          <p class="text-sm text-gray-500 mt-1">Proveedores por verificar</p>
           <router-link to="/providers" class="inline-block mt-3 text-sm text-blue-600 font-medium hover:underline">Revisar perfiles →</router-link>
         </div>
         <div class="bg-white rounded-xl shadow p-5 border-l-4 border-blue-400">
@@ -170,7 +170,7 @@ onUnmounted(() => {
 
       <!-- Totales -->
       <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-        <StatCard title="Profesionales" :value="stats.totals.providers" icon="🔧" />
+        <StatCard title="Proveedores" :value="stats.totals.providers" icon="🔧" />
         <StatCard title="Usuarios" :value="stats.totals.users" icon="👥" />
         <StatCard title="Solicitudes" :value="stats.totals.requests" icon="📋" />
         <StatCard title="Conversaciones" :value="stats.totals.conversations" icon="💬" />
@@ -215,7 +215,7 @@ onUnmounted(() => {
           </div>
 
           <div class="bg-white rounded-xl shadow p-5">
-            <h3 class="font-semibold text-gray-700 mb-3">🏆 Ranking de profesionales</h3>
+            <h3 class="font-semibold text-gray-700 mb-3">🏆 Ranking de proveedores</h3>
             <div v-if="!stats.topProviders.length" class="text-sm text-gray-400">Aún sin calificaciones.</div>
             <ol v-else class="space-y-2">
               <li v-for="(p, i) in stats.topProviders" :key="p._id" class="flex items-center gap-3 text-sm">
