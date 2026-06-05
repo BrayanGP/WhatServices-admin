@@ -1,10 +1,17 @@
 // Metadatos de los tipos de nodo del constructor de flujo
 
+export const uid = () => `id${Math.random().toString(36).slice(2, 7)}`
+
 export const PALETTE = [
   { type: 'message', label: 'Mensaje', icon: '💬', color: '#128C7E', hint: 'Envía un texto al cliente' },
   { type: 'ask', label: 'Pregunta', icon: '❓', color: '#075E54', hint: 'Pregunta y espera respuesta' },
   { type: 'condition', label: 'Condición', icon: '🔀', color: '#8B5CF6', hint: 'if / else-if / case' },
-  { type: 'action', label: 'Acción', icon: '⚙️', color: '#0EA5E9', hint: 'Buscar, catálogo, trabajos…' },
+  { type: 'intent', label: 'Intención', icon: '🎯', color: '#F59E0B', hint: 'Ramifica por intención detectada' },
+  { type: 'buttons', label: 'Botones', icon: '🔘', color: '#0EA5E9', hint: 'Multi-opción (máx 3)' },
+  { type: 'list', label: 'Lista', icon: '📋', color: '#0EA5E9', hint: 'Menú con secciones' },
+  { type: 'poll', label: 'Encuesta', icon: '📊', color: '#0EA5E9', hint: 'Votación nativa' },
+  { type: 'carousel', label: 'Carrusel', icon: '🖼️', color: '#0EA5E9', hint: 'Galería de tarjetas' },
+  { type: 'action', label: 'Acción', icon: '⚙️', color: '#0284C7', hint: 'Buscar, catálogo, trabajos…' },
   { type: 'end', label: 'Fin', icon: '🏁', color: '#6B7280', hint: 'Termina la conversación' },
 ]
 
@@ -13,7 +20,12 @@ export const NODE_META = {
   message: { label: 'Mensaje', icon: '💬', color: '#128C7E' },
   ask: { label: 'Pregunta', icon: '❓', color: '#075E54' },
   condition: { label: 'Condición', icon: '🔀', color: '#8B5CF6' },
-  action: { label: 'Acción', icon: '⚙️', color: '#0EA5E9' },
+  intent: { label: 'Intención', icon: '🎯', color: '#F59E0B' },
+  buttons: { label: 'Botones', icon: '🔘', color: '#0EA5E9' },
+  list: { label: 'Lista', icon: '📋', color: '#0EA5E9' },
+  poll: { label: 'Encuesta', icon: '📊', color: '#0EA5E9' },
+  carousel: { label: 'Carrusel', icon: '🖼️', color: '#0EA5E9' },
+  action: { label: 'Acción', icon: '⚙️', color: '#0284C7' },
   end: { label: 'Fin', icon: '🏁', color: '#6B7280' },
 }
 
@@ -24,6 +36,11 @@ export const makeData = (type) => {
     case 'ask': return { text: '¿Qué necesitas?', saveAs: 'respuesta', capture: 'text' }
     case 'condition': return { cases: [{ label: 'Caso 1', logic: 'AND', rules: [{ field: 'message', op: 'contains', value: '' }] }] }
     case 'action': return { action: 'matchService', params: {} }
+    case 'intent': return { intents: [] }
+    case 'buttons': return { text: 'Elige una opción:', buttons: [{ id: uid(), label: 'Opción 1' }, { id: uid(), label: 'Opción 2' }] }
+    case 'list': return { text: 'Selecciona una opción:', buttonText: 'Ver opciones', footer: '', sections: [{ title: 'Opciones', rows: [{ id: uid(), label: 'Fila 1', description: '' }] }] }
+    case 'poll': return { question: '¿Cuál prefieres?', options: [{ id: uid(), label: 'Opción 1' }, { id: uid(), label: 'Opción 2' }], multi: false }
+    case 'carousel': return { cards: [{ image: '', title: 'Tarjeta 1', body: '' }] }
     default: return {}
   }
 }
@@ -88,5 +105,21 @@ export const outputsFor = (node) => {
     if (!outs.length) return [{ id: null, label: '' }]
     return outs.map((o) => ({ id: o, label: OUT_LABELS[o] || o }))
   }
-  return [{ id: null, label: '' }] // start, message, ask
+  if (node.type === 'intent') {
+    const ints = (d.intents || []).map((k) => ({ id: `intent:${k}`, label: k }))
+    return [...ints, { id: 'else', label: OUT_LABELS.else }]
+  }
+  if (node.type === 'buttons') {
+    const b = (d.buttons || []).map((x) => ({ id: `btn:${x.id}`, label: x.label }))
+    return [...b, { id: 'else', label: OUT_LABELS.else }]
+  }
+  if (node.type === 'list') {
+    const rows = (d.sections || []).flatMap((s) => s.rows || []).map((r) => ({ id: `row:${r.id}`, label: r.label }))
+    return [...rows, { id: 'else', label: OUT_LABELS.else }]
+  }
+  if (node.type === 'poll') {
+    const o = (d.options || []).map((x) => ({ id: `opt:${x.id}`, label: x.label }))
+    return [...o, { id: 'else', label: OUT_LABELS.else }]
+  }
+  return [{ id: null, label: '' }] // start, message, ask, carousel
 }

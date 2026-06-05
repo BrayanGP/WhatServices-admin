@@ -8,9 +8,10 @@ import '@vue-flow/core/dist/theme-default.css'
 import '@vue-flow/controls/dist/style.css'
 import { useAdminStore } from '../stores/admin'
 import FlowNode from '../flow/FlowNode.vue'
-import { currentFlowTemplate } from '../flow/template'
+import FlowSimulator from '../flow/FlowSimulator.vue'
+import { TEMPLATES } from '../flow/templates'
 import {
-  PALETTE, makeData, ACTIONS, CAPTURE_OPTS, CONDITION_FIELDS, OPERATORS,
+  PALETTE, makeData, ACTIONS, CAPTURE_OPTS, CONDITION_FIELDS, OPERATORS, uid,
 } from '../flow/nodeTypes'
 
 const store = useAdminStore()
@@ -30,6 +31,11 @@ const isPublished = ref(false)
 const loading = ref(true)
 const status = ref('')
 const noValueOps = ['exists', 'isTrue', 'isFalse']
+const galleryOpen = ref(false)
+const simOpen = ref(false)
+const intentsList = ref([])
+const categoriesList = ref([])
+const TEMPLATES_ = TEMPLATES
 
 const selectedNode = computed(() => nodes.value.find((n) => n.id === selectedId.value) || null)
 
@@ -49,8 +55,14 @@ const ensureStart = () => {
 
 onMounted(async () => {
   try {
-    const r = await store.fetchFlow()
+    const [r, ints, cats] = await Promise.all([
+      store.fetchFlow(),
+      store.fetchIntents().catch(() => []),
+      store.fetchCategories().catch(() => []),
+    ])
     isPublished.value = !!r.isPublished
+    intentsList.value = ints || []
+    categoriesList.value = Array.isArray(cats) ? cats : (cats.categories || [])
     if (r.draft && (r.draft.nodes || []).length) applyGraph(r.draft)
     else ensureStart()
   } catch (e) { ensureStart() }
@@ -110,9 +122,24 @@ const unpublish = async () => {
   try { const r = await store.unpublishFlow(); isPublished.value = r.isPublished; flash('⏸️ Despublicado: el bot volvió al flujo por defecto') }
   catch (e) { flash('Error') }
 }
-const loadTemplate = () => {
-  if (!confirm('Esto reemplaza el lienzo actual con la plantilla del flujo por defecto. ¿Continuar?')) return
-  applyGraph(currentFlowTemplate()); selectedId.value = null
+const pickTemplate = (t) => {
+  if (!confirm(`Cargar la plantilla “${t.name}”. Esto reemplaza el lienzo actual. ¿Continuar?`)) return
+  applyGraph(t.build()); selectedId.value = null; galleryOpen.value = false
+}
+
+// ---- Inspector: helpers para listas de los componentes ----
+const addButton = (d) => d.buttons.push({ id: uid(), label: `Opción ${d.buttons.length + 1}` })
+const removeButton = (d, i) => d.buttons.splice(i, 1)
+const addRow = (sec) => sec.rows.push({ id: uid(), label: 'Nueva fila', description: '' })
+const removeRow = (sec, i) => sec.rows.splice(i, 1)
+const addOption = (d) => d.options.push({ id: uid(), label: `Opción ${d.options.length + 1}` })
+const removeOption = (d, i) => d.options.splice(i, 1)
+const addCard = (d) => d.cards.push({ image: '', title: `Tarjeta ${d.cards.length + 1}`, body: '' })
+const removeCard = (d, i) => d.cards.splice(i, 1)
+const toggleIntent = (d, key) => {
+  if (!Array.isArray(d.intents)) d.intents = []
+  const i = d.intents.indexOf(key)
+  if (i === -1) d.intents.push(key); else d.intents.splice(i, 1)
 }
 const clearAll = () => {
   if (!confirm('Esto borra todos los bloques (deja solo Inicio). ¿Continuar?')) return
@@ -132,7 +159,8 @@ const clearAll = () => {
       </span>
       <div class="flex-1"></div>
       <span class="text-xs text-gray-500">{{ status }}</span>
-      <button @click="loadTemplate" class="text-sm px-3 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-50">Cargar plantilla</button>
+      <button @click="simOpen = true" class="text-sm px-3 py-1.5 rounded-lg border border-brand-green text-brand-medium hover:bg-green-50">📱 Probar</button>
+      <button @click="galleryOpen = true" class="text-sm px-3 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-50">Plantillas</button>
       <button @click="clearAll" class="text-sm px-3 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-50">Limpiar</button>
       <button @click="save" class="text-sm px-3 py-1.5 rounded-lg bg-brand-medium text-white hover:opacity-90">Guardar borrador</button>
       <button v-if="!isPublished" @click="publish" class="text-sm px-3 py-1.5 rounded-lg bg-brand-green text-white hover:bg-brand-lightGreen">Publicar</button>
@@ -262,6 +290,84 @@ const clearAll = () => {
             <button @click="addCase(selectedNode.data)" class="text-xs text-brand-green font-medium hover:underline">+ agregar caso</button>
           </div>
 
+          <!-- INTENT -->
+          <div v-else-if="selectedNode.type === 'intent'" class="space-y-2">
+            <p class="text-[11px] text-gray-500">Ramifica según la intención detectada en el mensaje del cliente. Marca las intenciones que quieras enrutar; el resto sale por <b>“Si no”</b>.</p>
+            <p v-if="!intentsList.length" class="text-xs text-amber-600">No hay intenciones aún. Créalas en Bot → Intenciones.</p>
+            <label v-for="it in intentsList" :key="it._id" class="flex items-center gap-2 text-sm border border-gray-200 rounded-lg px-2 py-1.5">
+              <input type="checkbox" class="accent-brand-green" :checked="(selectedNode.data.intents || []).includes(it.key)" @change="toggleIntent(selectedNode.data, it.key)" />
+              <span class="truncate">{{ it.name }} <span class="text-gray-400 font-mono text-xs">{{ it.key }}</span></span>
+            </label>
+          </div>
+
+          <!-- BUTTONS -->
+          <div v-else-if="selectedNode.type === 'buttons'" class="space-y-3">
+            <div>
+              <label class="text-xs text-gray-600 block mb-1">Texto</label>
+              <textarea v-model="selectedNode.data.text" rows="3" class="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:border-brand-green outline-none"></textarea>
+            </div>
+            <p class="text-[11px] text-gray-500">Botones (máx. 3). Cada uno es una salida.</p>
+            <div v-for="(b, i) in selectedNode.data.buttons" :key="b.id" class="flex items-center gap-1">
+              <input v-model="b.label" class="flex-1 border border-gray-300 rounded px-2 py-1 text-sm" />
+              <button @click="removeButton(selectedNode.data, i)" class="text-red-400 text-xs px-1">✕</button>
+            </div>
+            <button v-if="selectedNode.data.buttons.length < 3" @click="addButton(selectedNode.data)" class="text-xs text-brand-green font-medium hover:underline">+ botón</button>
+          </div>
+
+          <!-- LIST -->
+          <div v-else-if="selectedNode.type === 'list'" class="space-y-3">
+            <div>
+              <label class="text-xs text-gray-600 block mb-1">Texto</label>
+              <textarea v-model="selectedNode.data.text" rows="2" class="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:border-brand-green outline-none"></textarea>
+            </div>
+            <div>
+              <label class="text-xs text-gray-600 block mb-1">Texto del botón</label>
+              <input v-model="selectedNode.data.buttonText" class="w-full border border-gray-300 rounded-lg px-2 py-1 text-sm" />
+            </div>
+            <div v-for="(sec, si) in selectedNode.data.sections" :key="si" class="border border-gray-200 rounded-lg p-2 space-y-2">
+              <input v-model="sec.title" placeholder="Título de la sección" class="w-full border border-gray-300 rounded px-2 py-1 text-xs font-medium" />
+              <div v-for="(r, ri) in sec.rows" :key="r.id" class="bg-gray-50 rounded p-1.5 space-y-1">
+                <div class="flex items-center gap-1">
+                  <input v-model="r.label" placeholder="Fila" class="flex-1 border border-gray-300 rounded px-1 py-0.5 text-xs" />
+                  <button @click="removeRow(sec, ri)" class="text-red-400 text-xs px-1">✕</button>
+                </div>
+                <input v-model="r.description" placeholder="Descripción (opcional)" class="w-full border border-gray-300 rounded px-1 py-0.5 text-xs" />
+              </div>
+              <button @click="addRow(sec)" class="text-[11px] text-brand-medium hover:underline">+ fila</button>
+            </div>
+          </div>
+
+          <!-- POLL -->
+          <div v-else-if="selectedNode.type === 'poll'" class="space-y-3">
+            <div>
+              <label class="text-xs text-gray-600 block mb-1">Pregunta</label>
+              <input v-model="selectedNode.data.question" class="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:border-brand-green outline-none" />
+            </div>
+            <label class="flex items-center gap-2 text-xs"><input type="checkbox" v-model="selectedNode.data.multi" class="accent-brand-green" /> Permitir varias respuestas</label>
+            <p class="text-[11px] text-gray-500">Opciones (cada una es una salida).</p>
+            <div v-for="(o, i) in selectedNode.data.options" :key="o.id" class="flex items-center gap-1">
+              <input v-model="o.label" class="flex-1 border border-gray-300 rounded px-2 py-1 text-sm" />
+              <button @click="removeOption(selectedNode.data, i)" class="text-red-400 text-xs px-1">✕</button>
+            </div>
+            <button @click="addOption(selectedNode.data)" class="text-xs text-brand-green font-medium hover:underline">+ opción</button>
+            <p class="text-[10px] text-amber-600">Nota: el voto de la encuesta puede no ramificar en todos los dispositivos; el bot también acepta la respuesta por número/texto.</p>
+          </div>
+
+          <!-- CAROUSEL -->
+          <div v-else-if="selectedNode.type === 'carousel'" class="space-y-3">
+            <p class="text-[11px] text-gray-500">Galería de tarjetas (se envían como secuencia de imágenes con texto).</p>
+            <div v-for="(c, i) in selectedNode.data.cards" :key="i" class="border border-gray-200 rounded-lg p-2 space-y-1">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-medium text-gray-600">Tarjeta {{ i + 1 }}</span>
+                <button @click="removeCard(selectedNode.data, i)" class="text-red-400 text-xs">✕</button>
+              </div>
+              <input v-model="c.image" placeholder="URL de la imagen" class="w-full border border-gray-300 rounded px-1 py-0.5 text-xs font-mono" />
+              <input v-model="c.title" placeholder="Título" class="w-full border border-gray-300 rounded px-1 py-0.5 text-xs" />
+              <textarea v-model="c.body" rows="2" placeholder="Texto" class="w-full border border-gray-300 rounded px-1 py-0.5 text-xs"></textarea>
+            </div>
+            <button @click="addCard(selectedNode.data)" class="text-xs text-brand-green font-medium hover:underline">+ tarjeta</button>
+          </div>
+
           <!-- START / END -->
           <div v-else class="text-sm text-gray-500">
             <p v-if="selectedNode.type === 'start'">Punto de entrada del flujo. Conéctalo al primer bloque.</p>
@@ -270,6 +376,28 @@ const clearAll = () => {
         </template>
       </div>
     </div>
+
+    <!-- Modal: galería de plantillas -->
+    <div v-if="galleryOpen" class="fixed inset-0 z-40 bg-black/40 grid place-items-center p-4" @click.self="galleryOpen = false">
+      <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-bold text-brand-dark text-lg">Plantillas de flujo</h3>
+          <button @click="galleryOpen = false" class="text-gray-400 hover:text-gray-600">✕</button>
+        </div>
+        <div class="grid sm:grid-cols-2 gap-3">
+          <button v-for="t in TEMPLATES_" :key="t.id" @click="pickTemplate(t)"
+            class="text-left border border-gray-200 rounded-xl p-4 hover:border-brand-green hover:shadow-sm transition">
+            <div class="text-2xl mb-1">{{ t.icon }}</div>
+            <p class="font-semibold text-brand-dark">{{ t.name }}</p>
+            <p class="text-xs text-gray-500 mt-1 leading-snug">{{ t.description }}</p>
+          </button>
+        </div>
+        <p class="text-[11px] text-gray-400 mt-4">Al elegir una plantilla se reemplaza el lienzo. Luego puedes editarla y publicarla.</p>
+      </div>
+    </div>
+
+    <!-- Panel: simulador de teléfono -->
+    <FlowSimulator v-if="simOpen" :nodes="nodes" :edges="edges" :categories="categoriesList" :intents="intentsList" @close="simOpen = false" />
   </div>
 </template>
 
