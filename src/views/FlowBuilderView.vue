@@ -11,7 +11,7 @@ import FlowNode from '../flow/FlowNode.vue'
 import FlowSimulator from '../flow/FlowSimulator.vue'
 import { TEMPLATES } from '../flow/templates'
 import {
-  PALETTE, makeData, ACTIONS, CAPTURE_OPTS, CONDITION_FIELDS, OPERATORS, uid,
+  PALETTE, PALETTE_GROUPS, FLOW_VARS, makeData, ACTIONS, CAPTURE_OPTS, CONDITION_FIELDS, OPERATORS, uid,
 } from '../flow/nodeTypes'
 
 const store = useAdminStore()
@@ -33,9 +33,18 @@ const status = ref('')
 const noValueOps = ['exists', 'isTrue', 'isFalse']
 const galleryOpen = ref(false)
 const simOpen = ref(false)
+const showVars = ref(false)
 const intentsList = ref([])
 const categoriesList = ref([])
 const TEMPLATES_ = TEMPLATES
+const FLOW_VARS_ = FLOW_VARS
+const groupedPalette = PALETTE_GROUPS.map((g) => ({ g, items: PALETTE.filter((p) => p.group === g) }))
+
+// Resaltado del nodo activo durante la simulación
+const highlightNode = (id) => {
+  nodes.value.forEach((n) => { n.class = n.id === id ? 'sim-active' : '' })
+}
+const closeSim = () => { simOpen.value = false; highlightNode(null) }
 
 const selectedNode = computed(() => nodes.value.find((n) => n.id === selectedId.value) || null)
 
@@ -171,17 +180,21 @@ const clearAll = () => {
     </div>
 
     <div class="flex flex-1 min-h-0">
-      <!-- Paleta -->
-      <div class="w-40 shrink-0 border-r border-gray-200 p-2 space-y-2 overflow-y-auto bg-gray-50">
-        <p class="text-[11px] uppercase tracking-wide text-gray-400 font-semibold px-1">Bloques</p>
-        <div v-for="p in PALETTE" :key="p.type" draggable="true" @dragstart="onDragStart($event, p.type)"
-          class="cursor-grab active:cursor-grabbing rounded-lg border border-gray-200 bg-white p-2 hover:border-brand-green hover:shadow-sm transition">
-          <div class="flex items-center gap-2 text-sm font-medium text-brand-dark">
-            <span :style="{ color: p.color }">{{ p.icon }}</span> {{ p.label }}
+      <!-- Paleta (por módulos) -->
+      <div class="w-44 shrink-0 border-r border-gray-200 p-2 space-y-3 overflow-y-auto bg-gray-50">
+        <div v-for="grp in groupedPalette" :key="grp.g">
+          <p class="text-[11px] uppercase tracking-wide text-gray-400 font-semibold px-1 mb-1">{{ grp.g }}</p>
+          <div class="space-y-1.5">
+            <div v-for="p in grp.items" :key="p.type" draggable="true" @dragstart="onDragStart($event, p.type)"
+              class="cursor-grab active:cursor-grabbing rounded-lg border border-gray-200 bg-white p-2 hover:border-brand-green hover:shadow-sm transition">
+              <div class="flex items-center gap-2 text-sm font-medium text-brand-dark">
+                <span :style="{ color: p.color }">{{ p.icon }}</span> {{ p.label }}
+              </div>
+              <p class="text-[10px] text-gray-500 mt-0.5 leading-tight">{{ p.hint }}</p>
+            </div>
           </div>
-          <p class="text-[10px] text-gray-500 mt-0.5 leading-tight">{{ p.hint }}</p>
         </div>
-        <p class="text-[10px] text-gray-400 px-1 pt-2">Arrastra un bloque al lienzo. Conecta los puntos para enlazar.</p>
+        <p class="text-[10px] text-gray-400 px-1 pt-1 border-t border-gray-200">Arrastra un bloque al lienzo. Conecta los puntos para enlazar.</p>
       </div>
 
       <!-- Lienzo -->
@@ -195,6 +208,24 @@ const clearAll = () => {
 
       <!-- Inspector -->
       <div class="w-72 shrink-0 border-l border-gray-200 p-3 overflow-y-auto bg-white">
+        <!-- Variables disponibles -->
+        <div class="mb-3 border border-brand-green/30 rounded-lg bg-brand-light/40">
+          <button @click="showVars = !showVars" class="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-brand-dark">
+            <span>🔤 Variables disponibles</span>
+            <span class="text-gray-400">{{ showVars ? '▲' : '▼' }}</span>
+          </button>
+          <div v-if="showVars" class="px-3 pb-3 space-y-1">
+            <p class="text-[11px] text-gray-500 mb-1">Escríbelas en cualquier mensaje o pregunta; se reemplazan solas con datos reales.</p>
+            <div v-for="x in FLOW_VARS_" :key="x.v" class="flex gap-2 text-[11px]">
+              <code class="text-brand-medium font-mono shrink-0">{{ x.v }}</code>
+              <span class="text-gray-600">{{ x.d }}</span>
+            </div>
+            <p class="text-[11px] text-gray-500 pt-1 border-t border-brand-green/20 mt-1">
+              También puedes usar lo que guardes en una <b>Pregunta</b>: <code class="text-brand-medium">{tu_variable}</code>.
+            </p>
+          </div>
+        </div>
+
         <template v-if="!selectedNode">
           <p class="text-sm text-gray-400 mt-2">Selecciona un bloque para editarlo.</p>
         </template>
@@ -397,7 +428,8 @@ const clearAll = () => {
     </div>
 
     <!-- Panel: simulador de teléfono -->
-    <FlowSimulator v-if="simOpen" :nodes="nodes" :edges="edges" :categories="categoriesList" :intents="intentsList" @close="simOpen = false" />
+    <FlowSimulator v-if="simOpen" :nodes="nodes" :edges="edges" :categories="categoriesList" :intents="intentsList"
+      @node="highlightNode" @close="closeSim" />
   </div>
 </template>
 
@@ -405,4 +437,6 @@ const clearAll = () => {
 .vue-flow__handle { width: 9px; height: 9px; background: #128C7E; border: 1px solid #fff; }
 .vue-flow__edge-path { stroke: #94a3b8; stroke-width: 2; }
 .vue-flow__edge-text { font-size: 9px; fill: #475569; }
+/* nodo activo durante la simulación */
+.vue-flow__node.sim-active { outline: 3px solid #25D366; outline-offset: 2px; border-radius: 14px; }
 </style>

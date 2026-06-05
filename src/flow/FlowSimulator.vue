@@ -8,7 +8,7 @@ const props = defineProps({
   categories: { type: Array, default: () => [] },
   intents: { type: Array, default: () => [] },
 })
-const emit = defineEmits(['close'])
+const emit = defineEmits(['close', 'node'])
 
 const messages = ref([])
 const state = ref({ nodeId: null, vars: {} })
@@ -25,9 +25,22 @@ const graph = () => ({
 
 const helpers = computed(() => ({
   servicesList: props.categories.map((c) => `• ${c.name}`).join('\n'),
+  servicesCount: props.categories.length,
+  // Match difuso (mismo espíritu que fuse.js del backend): substring o prefijo de 4 letras
   matchService: (lower) => {
-    const hit = props.categories.find((c) => norm(lower).includes(norm(c.name)) || norm(c.name).includes(norm(lower)))
-    return hit ? hit.name : null
+    const nl = norm(lower)
+    const words = nl.split(/\s+/).filter((w) => w.length >= 3)
+    for (const c of props.categories) {
+      const cn = norm(c.name)
+      if (!cn) continue
+      if (nl.includes(cn) || cn.includes(nl)) return c.name
+      for (const w of words) {
+        const k = Math.min(4, w.length, cn.length)
+        if (k >= 4 && w.slice(0, k) === cn.slice(0, k)) return c.name
+        if (cn.includes(w) || w.includes(cn)) return c.name
+      }
+    }
+    return null
   },
   matchIntent: (lower) => {
     for (const it of props.intents) {
@@ -50,6 +63,7 @@ const restart = () => {
   const r = advance(graph(), state.value, '', helpers.value)
   state.value = r.state; awaiting.value = r.awaiting
   pushBubbles(r.bubbles)
+  emit('node', state.value.nodeId || null)
 }
 
 const sendRaw = (display, value) => {
@@ -59,6 +73,7 @@ const sendRaw = (display, value) => {
   state.value = r.state; awaiting.value = r.awaiting
   pushBubbles(r.bubbles)
   inputText.value = ''
+  emit('node', state.value.nodeId || null)
 }
 
 const sendText = () => { const t = inputText.value.trim(); if (t) sendRaw(t, t) }

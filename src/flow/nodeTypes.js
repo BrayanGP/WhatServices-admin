@@ -3,16 +3,35 @@
 export const uid = () => `id${Math.random().toString(36).slice(2, 7)}`
 
 export const PALETTE = [
-  { type: 'message', label: 'Mensaje', icon: '💬', color: '#128C7E', hint: 'Envía un texto al cliente' },
-  { type: 'ask', label: 'Pregunta', icon: '❓', color: '#075E54', hint: 'Pregunta y espera respuesta' },
-  { type: 'condition', label: 'Condición', icon: '🔀', color: '#8B5CF6', hint: 'if / else-if / case' },
-  { type: 'intent', label: 'Intención', icon: '🎯', color: '#F59E0B', hint: 'Ramifica por intención detectada' },
-  { type: 'buttons', label: 'Botones', icon: '🔘', color: '#0EA5E9', hint: 'Multi-opción (máx 3)' },
-  { type: 'list', label: 'Lista', icon: '📋', color: '#0EA5E9', hint: 'Menú con secciones' },
-  { type: 'poll', label: 'Encuesta', icon: '📊', color: '#0EA5E9', hint: 'Votación nativa' },
-  { type: 'carousel', label: 'Carrusel', icon: '🖼️', color: '#0EA5E9', hint: 'Galería de tarjetas' },
-  { type: 'action', label: 'Acción', icon: '⚙️', color: '#0284C7', hint: 'Buscar, catálogo, trabajos…' },
-  { type: 'end', label: 'Fin', icon: '🏁', color: '#6B7280', hint: 'Termina la conversación' },
+  { type: 'message', label: 'Mensaje', icon: '💬', color: '#128C7E', hint: 'Envía un texto al cliente', group: 'Básicos' },
+  { type: 'ask', label: 'Pregunta', icon: '❓', color: '#075E54', hint: 'Pregunta y espera respuesta', group: 'Básicos' },
+  { type: 'condition', label: 'Condición', icon: '🔀', color: '#8B5CF6', hint: 'if / else-if / case', group: 'Lógica' },
+  { type: 'intent', label: 'Intención', icon: '🎯', color: '#F59E0B', hint: 'Ramifica por intención detectada', group: 'Lógica' },
+  { type: 'buttons', label: 'Botones', icon: '🔘', color: '#0EA5E9', hint: 'Multi-opción (máx 3)', group: 'WhatsApp' },
+  { type: 'list', label: 'Lista', icon: '📋', color: '#0EA5E9', hint: 'Menú con secciones', group: 'WhatsApp' },
+  { type: 'poll', label: 'Encuesta', icon: '📊', color: '#0EA5E9', hint: 'Votación nativa', group: 'WhatsApp' },
+  { type: 'carousel', label: 'Carrusel', icon: '🖼️', color: '#0EA5E9', hint: 'Galería de tarjetas', group: 'WhatsApp' },
+  { type: 'action', label: 'Acción', icon: '⚙️', color: '#0284C7', hint: 'Buscar, catálogo, trabajos…', group: 'Acciones' },
+  { type: 'end', label: 'Fin', icon: '🏁', color: '#6B7280', hint: 'Termina la conversación', group: 'Acciones' },
+]
+
+// Orden de los módulos de la paleta
+export const PALETTE_GROUPS = ['Básicos', 'Lógica', 'WhatsApp', 'Acciones']
+
+// Variables disponibles en los mensajes del flujo (dinámicas, se llenan en tiempo real)
+export const FLOW_VARS = [
+  { v: '{name}', d: 'Nombre del cliente' },
+  { v: '{firstName}', d: 'Primer nombre' },
+  { v: '{greeting}', d: 'Buenos días/tardes/noches (según la hora)' },
+  { v: '{phone}', d: 'Teléfono del cliente' },
+  { v: '{services}', d: 'Lista de servicios activos' },
+  { v: '{servicesCount}', d: 'Cuántos servicios hay' },
+  { v: '{service}', d: 'Servicio que eligió' },
+  { v: '{count}', d: 'Nº de resultados encontrados' },
+  { v: '{cp}', d: 'Código postal capturado' },
+  { v: '{date}', d: 'Fecha actual' },
+  { v: '{time}', d: 'Hora actual' },
+  { v: '{open} {close}', d: 'Horario de atención' },
 ]
 
 export const NODE_META = {

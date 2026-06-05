@@ -93,9 +93,20 @@ export const advance = (graph, state, input, helpers) => {
     isOpen: true, name: 'Cliente',
     vars,
   }
+  // Variables dinámicas (espejo del backend)
+  const now = new Date()
+  const h = now.getHours()
+  const greeting = h < 12 ? 'Buenos días' : h < 19 ? 'Buenas tardes' : 'Buenas noches'
+  const firstName = String(ctx.name || '').trim().split(/\s+/)[0] || ''
+  let dateStr = '', timeStr = ''
+  try { dateStr = new Intl.DateTimeFormat('es-MX', { dateStyle: 'long' }).format(now) } catch (e) { dateStr = now.toLocaleDateString() }
+  try { timeStr = new Intl.DateTimeFormat('es-MX', { hour: '2-digit', minute: '2-digit' }).format(now) } catch (e) { timeStr = now.toLocaleTimeString() }
+
   const fillVars = () => ({
-    name: ctx.name, service: ctx.service || '', cp: ctx.cp || '', count: ctx.resultsCount || 0,
-    services: helpers.servicesList || '', open: 8, close: 20, ...ctx.vars,
+    name: ctx.name, firstName, greeting, phone: '521555000000', intent: ctx.intent,
+    service: ctx.service || '', cp: ctx.cp || '', count: ctx.resultsCount || 0,
+    services: helpers.servicesList || '', servicesCount: helpers.servicesCount || 0,
+    date: dateStr, time: timeStr, open: 8, close: 20, ...ctx.vars,
   })
 
   const bubbles = []
@@ -128,12 +139,16 @@ export const advance = (graph, state, input, helpers) => {
   } else {
     const start = nodes.find((n) => n.type === 'start')
     current = start ? getNext(start.id) : null
+    if (!start) note('⚠️ No hay bloque de Inicio en el flujo.')
+    else if (!current) note('⚠️ El bloque Inicio no está conectado a ningún bloque.')
   }
 
   let steps = 0
+  let last = waiting || null
   while (current && steps < MAX_STEPS) {
     steps += 1
     const node = current
+    last = node
     const d = node.data || {}
 
     if (node.type === 'message') { bot(fill(d.text, fillVars())); current = getNext(node.id); continue }
@@ -215,6 +230,9 @@ export const advance = (graph, state, input, helpers) => {
     current = getNext(node.id)
   }
 
-  // sin más nodos → fin
-  return { bubbles, state: { nodeId: null, vars: {} }, awaiting: { type: current ? 'ask' : 'ended' } }
+  // sin más nodos → fin (o aviso si quedó un bloque sin salida conectada)
+  if (last && last.type !== 'end' && last.type !== 'start') {
+    note(`⚠️ El bloque "${last.type}" no tiene salida conectada; la conversación se detiene aquí.`)
+  }
+  return { bubbles, state: { nodeId: null, vars: {} }, awaiting: { type: 'ended' } }
 }
