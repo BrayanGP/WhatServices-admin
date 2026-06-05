@@ -34,7 +34,7 @@ const status = ref('')
 const noValueOps = ['exists', 'isTrue', 'isFalse']
 const galleryOpen = ref(false)
 const simOpen = ref(false)
-const showVars = ref(false)
+const varsOpen = ref(false)
 const intentsList = ref([])
 const categoriesList = ref([])
 const availableCats = ref([])
@@ -57,6 +57,12 @@ const fitAll = () => { try { fitView({ padding: 0.2 }) } catch (e) {} }
 const intentsOpen = ref(false)
 const openIntents = () => { intentsOpen.value = true }
 const onIntentsChanged = async () => { intentsList.value = await store.fetchIntents().catch(() => intentsList.value) }
+
+// Copiar variable al portapapeles
+const copyVar = async (text) => {
+  try { await navigator.clipboard.writeText(text) } catch (e) { /* noop */ }
+  flash(`📋 ${text} copiado`)
+}
 
 // Variables propias
 const addVar = () => customVars.value.push({ key: '', value: '' })
@@ -221,6 +227,7 @@ const clearAll = () => {
 
       <div class="ml-auto flex items-center gap-1.5 flex-wrap justify-end">
         <button @click="fitAll" class="text-sm px-2.5 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-50">🔍 Ver todo</button>
+        <button @click="varsOpen = true" class="text-sm px-2.5 py-1.5 rounded-lg border border-brand-green/40 text-brand-medium hover:bg-green-50">🔤 Variables</button>
         <button @click="openIntents" class="text-sm px-2.5 py-1.5 rounded-lg border border-amber-300 text-amber-700 hover:bg-amber-50">🎯 Intenciones</button>
         <button @click="simOpen = true" class="text-sm px-2.5 py-1.5 rounded-lg border border-brand-green text-brand-medium hover:bg-green-50">📱 Probar</button>
         <button @click="galleryOpen = true" class="text-sm px-2.5 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-50">Plantillas</button>
@@ -263,42 +270,6 @@ const clearAll = () => {
 
       <!-- Inspector -->
       <div class="w-72 shrink-0 border-l border-gray-200 p-3 overflow-y-auto bg-white">
-        <!-- Variables disponibles -->
-        <div class="mb-3 border border-brand-green/30 rounded-lg bg-brand-light/40">
-          <button @click="showVars = !showVars" class="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-brand-dark">
-            <span>🔤 Variables disponibles</span>
-            <span class="text-gray-400">{{ showVars ? '▲' : '▼' }}</span>
-          </button>
-          <div v-if="showVars" class="px-3 pb-3 space-y-1">
-            <p class="text-[11px] text-gray-500 mb-1">Escríbelas en cualquier mensaje o pregunta; se reemplazan solas con datos reales.</p>
-            <div v-for="x in FLOW_VARS_" :key="x.v" class="flex gap-2 text-[11px]">
-              <code class="text-brand-medium font-mono shrink-0">{{ x.v }}</code>
-              <span class="text-gray-600">{{ x.d }}</span>
-            </div>
-            <p class="text-[11px] text-gray-500 pt-1 border-t border-brand-green/20 mt-1">
-              También puedes usar lo que guardes en una <b>Pregunta</b>: <code class="text-brand-medium">{tu_variable}</code>.
-            </p>
-
-            <!-- Mis variables -->
-            <div class="pt-2 border-t border-brand-green/20 mt-1">
-              <p class="text-[11px] font-medium text-brand-dark mb-1">⭐ Mis variables</p>
-              <p class="text-[11px] text-gray-500 mb-2">Crea constantes (ej. <code class="text-brand-medium">empresa</code> = WhatServices) y úsalas como <code class="text-brand-medium">{empresa}</code>.</p>
-              <div v-for="(v, i) in customVars" :key="i" class="flex items-center gap-1 mb-1">
-                <input v-model="v.key" placeholder="clave" class="w-24 border border-gray-300 rounded px-1.5 py-1 text-xs font-mono" />
-                <span class="text-gray-400 text-xs">=</span>
-                <input v-model="v.value" placeholder="valor" class="flex-1 border border-gray-300 rounded px-1.5 py-1 text-xs" />
-                <button @click="removeVar(i)" class="text-red-400 text-xs px-1">✕</button>
-              </div>
-              <div class="flex items-center gap-2 mt-1">
-                <button @click="addVar" class="text-xs text-brand-green font-medium hover:underline">+ variable</button>
-                <button @click="saveVars" :disabled="savingVars" class="text-xs px-2 py-1 rounded bg-brand-green text-white hover:bg-brand-lightGreen disabled:opacity-50">
-                  {{ savingVars ? 'Guardando…' : 'Guardar variables' }}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
         <template v-if="!selectedNode">
           <p class="text-sm text-gray-400 mt-2">Selecciona un bloque para editarlo.</p>
         </template>
@@ -494,6 +465,47 @@ const clearAll = () => {
             <p v-else>Termina la conversación. La próxima vez el cliente reinicia desde Inicio.</p>
           </div>
         </template>
+      </div>
+    </div>
+
+    <!-- Modal: variables -->
+    <div v-if="varsOpen" class="fixed inset-0 z-40 bg-black/40 grid place-items-center p-4" @click.self="varsOpen = false">
+      <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl p-5 max-h-[88vh] overflow-y-auto">
+        <div class="flex items-center justify-between mb-1">
+          <h3 class="font-bold text-brand-dark text-lg">🔤 Variables</h3>
+          <button @click="varsOpen = false" class="text-gray-400 hover:text-gray-600">✕</button>
+        </div>
+        <p class="text-xs text-gray-500 mb-4">Da clic en 📋 para copiar y pégala en cualquier mensaje o pregunta; se reemplazan solas con datos reales.</p>
+
+        <p class="text-[11px] uppercase tracking-wide text-gray-400 font-semibold mb-2">Del sistema</p>
+        <div class="grid sm:grid-cols-2 gap-2">
+          <div v-for="x in FLOW_VARS_" :key="x.v"
+            class="flex items-center gap-2 border border-gray-200 rounded-lg px-2.5 py-1.5 hover:border-brand-green/60 transition">
+            <button @click="copyVar(x.v)" title="Copiar" class="shrink-0 text-gray-400 hover:text-brand-green">📋</button>
+            <code class="text-brand-medium font-mono text-xs shrink-0">{{ x.v }}</code>
+            <span class="text-[11px] text-gray-500 truncate">{{ x.d }}</span>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between mt-5 mb-2">
+          <p class="text-[11px] uppercase tracking-wide text-gray-400 font-semibold">⭐ Mis variables</p>
+          <button @click="saveVars" :disabled="savingVars"
+            class="text-xs px-3 py-1.5 rounded-lg bg-brand-green text-white hover:bg-brand-lightGreen disabled:opacity-50">
+            {{ savingVars ? 'Guardando…' : 'Guardar' }}
+          </button>
+        </div>
+        <p class="text-[11px] text-gray-500 mb-2">Crea constantes (ej. <code class="text-brand-medium">empresa</code> = WhatServices) y úsalas como <code class="text-brand-medium">{empresa}</code>.</p>
+        <div v-for="(v, i) in customVars" :key="i" class="flex items-center gap-2 mb-1.5">
+          <button @click="copyVar('{' + (v.key || '') + '}')" title="Copiar" class="shrink-0 text-gray-400 hover:text-brand-green" :disabled="!v.key">📋</button>
+          <input v-model="v.key" placeholder="clave" class="w-32 border border-gray-300 rounded px-2 py-1 text-sm font-mono" />
+          <span class="text-gray-400 text-xs">=</span>
+          <input v-model="v.value" placeholder="valor" class="flex-1 border border-gray-300 rounded px-2 py-1 text-sm" />
+          <button @click="removeVar(i)" class="text-red-400 text-xs px-1">✕</button>
+        </div>
+        <button @click="addVar" class="text-xs text-brand-green font-medium hover:underline mt-1">+ variable</button>
+        <p class="text-[11px] text-gray-400 mt-3 pt-2 border-t border-gray-100">
+          También puedes usar lo que guardes en una <b>Pregunta</b> (campo “guardar en”): <code class="text-brand-medium">{tu_variable}</code>.
+        </p>
       </div>
     </div>
 
