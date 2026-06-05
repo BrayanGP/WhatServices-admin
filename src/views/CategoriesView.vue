@@ -29,6 +29,34 @@ const toggle = async (cat) => {
   Object.assign(cat, updated)
 }
 
+// ---- Editar categoría ----
+const editing = ref(null)
+const savingEdit = ref(false)
+const editErr = ref('')
+
+const openEdit = (cat) => {
+  editErr.value = ''
+  editing.value = { _id: cat._id, name: cat.name, icon: cat.icon || '', slug: cat.slug || '', isActive: cat.isActive !== false }
+}
+const regenSlug = () => { if (editing.value) editing.value.slug = slugify(editing.value.name) }
+
+const saveEdit = async () => {
+  if (!editing.value.name.trim()) { editErr.value = 'El nombre es obligatorio'; return }
+  savingEdit.value = true; editErr.value = ''
+  try {
+    const updated = await store.updateCategory(editing.value._id, {
+      name: editing.value.name.trim(),
+      icon: editing.value.icon,
+      slug: (editing.value.slug || slugify(editing.value.name)).trim(),
+      isActive: editing.value.isActive,
+    })
+    const orig = allCategories.value.find((c) => c._id === editing.value._id)
+    if (orig) Object.assign(orig, updated)
+    editing.value = null
+  } catch (e) { editErr.value = e.message || 'No se pudo guardar' }
+  finally { savingEdit.value = false }
+}
+
 const review = async (cat, action) => {
   const updated = await store.reviewCategory(cat._id, action)
   Object.assign(cat, updated)
@@ -110,7 +138,7 @@ const review = async (cat, action) => {
             </tr>
           </thead>
           <tbody>
-            <tr v-for="cat in active" :key="cat._id" class="border-t hover:bg-gray-50">
+            <tr v-for="cat in active" :key="cat._id" class="border-t hover:bg-brand-light/40 cursor-pointer transition" @click="openEdit(cat)">
               <td class="px-4 py-3 text-2xl">{{ cat.icon }}</td>
               <td class="px-4 py-3 font-medium text-gray-800">{{ cat.name }}</td>
               <td class="px-4 py-3 text-gray-400 font-mono text-xs">{{ cat.slug }}</td>
@@ -126,7 +154,8 @@ const review = async (cat, action) => {
                   {{ cat.status === 'rejected' ? 'Rechazada' : cat.isActive ? 'Activa' : 'Inactiva' }}
                 </span>
               </td>
-              <td class="px-4 py-3">
+              <td class="px-4 py-3" @click.stop>
+                <button @click="openEdit(cat)" class="text-xs text-brand-medium hover:underline mr-3">Editar</button>
                 <button
                   v-if="cat.status !== 'rejected'"
                   @click="toggle(cat)"
@@ -139,6 +168,47 @@ const review = async (cat, action) => {
             </tr>
           </tbody>
         </table>
+      </div>
+    </div>
+
+    <!-- Modal: editar categoría -->
+    <div v-if="editing" class="fixed inset-0 z-40 bg-black/40 grid place-items-center p-4" @click.self="editing = null">
+      <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-bold text-brand-dark text-lg">Editar categoría</h3>
+          <button @click="editing = null" class="text-gray-400 hover:text-gray-600">✕</button>
+        </div>
+        <div class="space-y-3">
+          <div class="flex items-end gap-3">
+            <div class="flex-1">
+              <label class="text-xs text-gray-600 block mb-1">Nombre</label>
+              <input v-model="editing.name" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-brand-green outline-none" />
+            </div>
+            <div>
+              <label class="text-xs text-gray-600 block mb-1">Emoji</label>
+              <input v-model="editing.icon" maxlength="4" class="w-20 border border-gray-300 rounded-lg px-3 py-2 text-sm text-center focus:border-brand-green outline-none" />
+            </div>
+          </div>
+          <div>
+            <label class="text-xs text-gray-600 block mb-1">Slug</label>
+            <div class="flex items-center gap-2">
+              <input v-model="editing.slug" class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono focus:border-brand-green outline-none" />
+              <button @click="regenSlug" class="text-xs px-2 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 whitespace-nowrap">Regenerar</button>
+            </div>
+            <p class="text-[11px] text-amber-600 mt-1">⚠️ Cambiar el nombre afecta el reconocimiento del bot y los proveedores ya asignados a esta categoría.</p>
+          </div>
+          <label class="flex items-center gap-2 text-sm">
+            <input type="checkbox" v-model="editing.isActive" class="accent-brand-green" /> Activa
+          </label>
+          <p v-if="editErr" class="text-sm text-red-600">{{ editErr }}</p>
+          <div class="flex gap-2 pt-1">
+            <button @click="saveEdit" :disabled="savingEdit"
+              class="flex-1 bg-brand-green text-white py-2 rounded-lg font-medium hover:bg-brand-lightGreen disabled:opacity-50">
+              {{ savingEdit ? 'Guardando...' : 'Guardar cambios' }}
+            </button>
+            <button @click="editing = null" class="px-4 py-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50">Cancelar</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
