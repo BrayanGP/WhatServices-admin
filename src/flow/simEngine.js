@@ -107,16 +107,24 @@ export const advance = (graph, state, input, helpers) => {
   try { dateStr = new Intl.DateTimeFormat('es-MX', { dateStyle: 'long' }).format(now) } catch (e) { dateStr = now.toLocaleDateString() }
   try { timeStr = new Intl.DateTimeFormat('es-MX', { hour: '2-digit', minute: '2-digit' }).format(now) } catch (e) { timeStr = now.toLocaleTimeString() }
 
-  const fillVars = () => ({
-    ...(helpers.customVars || {}),
-    name: ctx.name, firstName, greeting, phone: '521555000000', intent: ctx.intent,
-    service: ctx.service || '', cp: ctx.cp || '', count: ctx.resultsCount || 0,
-    services: helpers.servicesList || '', servicesCount: helpers.servicesCount || 0,
-    servicesAvailable: helpers.servicesAvailable || '', servicesAvailableCount: helpers.servicesAvailableCount || 0,
-    topRated: '1. Juan Pérez ⭐4.8\n2. Construcciones MX ⭐4.6\n3. ServiPro ⭐4.5', topRatedCount: 3,
-    nearby: '1. Taller El Vecino ⭐4.7\n2. ServiRápido ⭐4.4\n3. Manos a la Obra ⭐4.3', nearbyCount: 3,
-    date: dateStr, time: timeStr, open: 8, close: 20, ...ctx.vars,
-  })
+  const fillVars = () => {
+    const sys = {
+      name: ctx.name, firstName, greeting, phone: '521555000000', intent: ctx.intent,
+      service: ctx.service || '', cp: ctx.cp || '', count: ctx.resultsCount || 0,
+      services: helpers.servicesList || '', servicesCount: helpers.servicesCount || 0,
+      servicesAvailable: helpers.servicesAvailable || '', servicesAvailableCount: helpers.servicesAvailableCount || 0,
+      topRated: '1. Juan Pérez ⭐4.8\n2. Construcciones MX ⭐4.6\n3. ServiPro ⭐4.5', topRatedCount: 3,
+      nearby: '1. Taller El Vecino ⭐4.7\n2. ServiRápido ⭐4.4\n3. Manos a la Obra ⭐4.3', nearbyCount: 3,
+      date: dateStr, time: timeStr, open: 8, close: 20, ...ctx.vars,
+    }
+    const cv = helpers.customVars || {}
+    const out = {}
+    for (let p = 0; p < 2; p++) {
+      for (const k in cv) out[k] = fill(String(cv[k] == null ? '' : cv[k]), { ...sys, ...out })
+    }
+    Object.assign(out, sys)
+    return out
+  }
 
   const bubbles = []
   const bot = (t) => { if (t) bubbles.push({ from: 'bot', text: t }) }

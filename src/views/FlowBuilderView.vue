@@ -66,7 +66,7 @@ const copyVar = async (text) => {
 
 // Variables propias
 const addVar = () => customVars.value.push({ key: '', value: '' })
-const removeVar = (i) => customVars.value.splice(i, 1)
+const removeVar = (i) => { customVars.value.splice(i, 1); saveVars() }
 const saveVars = async () => {
   savingVars.value = true
   try {
@@ -495,25 +495,28 @@ const clearAll = () => {
         <div class="grid sm:grid-cols-2 gap-2">
           <div v-for="x in FLOW_VARS_" :key="x.v"
             class="flex items-center gap-2 border border-gray-200 rounded-lg px-2.5 py-1.5 hover:border-brand-green/60 transition">
-            <button @click="copyVar(x.v)" title="Copiar" class="shrink-0 text-gray-400 hover:text-brand-green">📋</button>
+            <button @click="copyVar(x.v)" title="Copiar"
+              class="shrink-0 px-1.5 py-1 rounded-md bg-brand-green/10 text-brand-green hover:bg-brand-green hover:text-white transition">📋</button>
             <code class="text-brand-medium font-mono text-xs shrink-0">{{ x.v }}</code>
             <span class="text-[11px] text-gray-500 truncate">{{ x.d }}</span>
           </div>
         </div>
 
-        <div class="flex items-center justify-between mt-5 mb-2">
+        <div class="flex items-center gap-2 mt-5 mb-1">
           <p class="text-[11px] uppercase tracking-wide text-gray-400 font-semibold">⭐ Mis variables</p>
-          <button @click="saveVars" :disabled="savingVars"
-            class="text-xs px-3 py-1.5 rounded-lg bg-brand-green text-white hover:bg-brand-lightGreen disabled:opacity-50">
-            {{ savingVars ? 'Guardando…' : 'Guardar' }}
-          </button>
+          <span class="text-[10px] text-gray-400">{{ savingVars ? 'guardando…' : '· se guardan solas' }}</span>
         </div>
-        <p class="text-[11px] text-gray-500 mb-2">Crea constantes (ej. <code class="text-brand-medium">empresa</code> = WhatServices) y úsalas como <code class="text-brand-medium">{empresa}</code>.</p>
+        <p class="text-[11px] text-gray-500 mb-2">
+          Crea constantes y úsalas como <code class="text-brand-medium">{clave}</code>. Pueden ser <b>dinámicas</b>: el valor puede llamar a otras variables,
+          ej. <code class="text-brand-medium">saludo</code> = <code class="text-brand-medium">{greeting} {firstName} 👋</code>.
+        </p>
         <div v-for="(v, i) in customVars" :key="i" class="flex items-center gap-2 mb-1.5">
-          <button @click="copyVar('{' + (v.key || '') + '}')" title="Copiar" class="shrink-0 text-gray-400 hover:text-brand-green" :disabled="!v.key">📋</button>
-          <input v-model="v.key" placeholder="clave" class="w-32 border border-gray-300 rounded px-2 py-1 text-sm font-mono" />
+          <button @click="copyVar('{' + (v.key || '') + '}')" title="Copiar" :disabled="!v.key"
+            class="shrink-0 px-1.5 py-1 rounded-md transition"
+            :class="v.key ? 'bg-brand-green/10 text-brand-green hover:bg-brand-green hover:text-white' : 'bg-gray-100 text-gray-300 cursor-not-allowed'">📋</button>
+          <input v-model="v.key" @change="saveVars" placeholder="clave" class="w-32 border border-gray-300 rounded px-2 py-1 text-sm font-mono" />
           <span class="text-gray-400 text-xs">=</span>
-          <input v-model="v.value" placeholder="valor" class="flex-1 border border-gray-300 rounded px-2 py-1 text-sm" />
+          <input v-model="v.value" @change="saveVars" placeholder="valor (admite {otrasVariables})" class="flex-1 border border-gray-300 rounded px-2 py-1 text-sm" />
           <button @click="removeVar(i)" class="text-red-400 text-xs px-1">✕</button>
         </div>
         <button @click="addVar" class="text-xs text-brand-green font-medium hover:underline mt-1">+ variable</button>
