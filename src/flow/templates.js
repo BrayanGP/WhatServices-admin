@@ -129,97 +129,95 @@ const catalogo = () => ({
   ],
 })
 
-// Asistente completo: saludo por hora + menú (buscar / ser proveedor / ver todos) + carrusel + ver trabajos + reinicio
+// Asistente completo (claro y tocable): menú con botones → servicio → modo con botones → carrusel → ver trabajos
 const asistente = () => ({
   nodes: [
-    { id: 'start', type: 'start', position: { x: 360, y: -120 }, data: {} },
-    { id: 'ask_inicio', type: 'ask', position: { x: 330, y: -10 }, data: {
-      text: '{greeting} 👋 Soy el asistente de *WhatServices*.\n¿Qué deseas hacer?\n\n1️⃣ Buscar un servicio\n2️⃣ Quiero ser *proveedor*\n3️⃣ Ver *todos* los profesionales\n\nTambién puedes escribir directamente el servicio que buscas.',
-      saveAs: 'mensaje', capture: 'text' } },
-    { id: 'cond_menu', type: 'condition', position: { x: 350, y: 110 }, data: { cases: [
-      { label: 'Ser proveedor', logic: 'OR', rules: [
-        { field: 'message', op: 'contains', value: '2' },
-        { field: 'message', op: 'contains', value: 'proveedor' },
-        { field: 'message', op: 'contains', value: 'registr' },
-      ] },
-      { label: 'Ver todos', logic: 'OR', rules: [
-        { field: 'message', op: 'contains', value: '3' },
-        { field: 'message', op: 'contains', value: 'todos' },
-        { field: 'message', op: 'contains', value: 'lista' },
-      ] },
-      { label: 'Buscar servicio', logic: 'OR', rules: [
-        { field: 'message', op: 'contains', value: '1' },
-        { field: 'message', op: 'contains', value: 'buscar' },
-        { field: 'message', op: 'contains', value: 'servicio' },
-      ] },
-    ] } },
-    { id: 'msg_register', type: 'message', position: { x: 30, y: 60 }, data: {
-      text: '¡Genial! 🧰 Regístrate como profesional y empieza a recibir clientes aquí:\n👉 {webRegister}' } },
-    { id: 'msg_allproviders', type: 'message', position: { x: 30, y: 180 }, data: {
-      text: 'Aquí puedes ver a *todos* los profesionales por categoría 👇\n👉 {webProviders}' } },
-    { id: 'node_intent', type: 'intent', position: { x: 350, y: 250 }, data: { intents: ['saludo', 'ayuda', 'despedida', 'hablar-humano'] } },
-    { id: 'msg_saludo', type: 'message', position: { x: 660, y: 200 }, data: { text: '{greeting}, {firstName}! 😊 Con gusto te ayudo.' } },
-    { id: 'msg_ayuda', type: 'message', position: { x: 660, y: 300 }, data: { text: 'Te ayudo a encontrar profesionales cerca de ti. 🛠️\nDime el servicio que necesitas (ej. *plomero*, *electricista*).' } },
-    { id: 'msg_humano', type: 'message', position: { x: 660, y: 400 }, data: { text: '¡Claro! Te paso con un asesor humano. 🙋 En un momento te contactan.' } },
-    { id: 'msg_despedida', type: 'message', position: { x: 760, y: 60 }, data: { text: '¡Gracias por usar *WhatServices*! 👋 Escríbeme cuando quieras.' } },
-    { id: 'ask_service', type: 'ask', position: { x: 340, y: 380 }, data: {
-      text: '¿Qué servicio necesitas? 🔧\n\n{servicesAvailable}', saveAs: 'serviceText', capture: 'text' } },
-    { id: 'act_match', type: 'action', position: { x: 350, y: 490 }, data: { action: 'matchService', params: {} } },
-    { id: 'msg_noservice', type: 'message', position: { x: 70, y: 520 }, data: { text: 'No reconocí ese servicio 🤔. Estos son los disponibles:\n\n{servicesAvailable}' } },
-    { id: 'ask_mode', type: 'ask', position: { x: 350, y: 600 }, data: {
-      text: 'Perfecto, *{service}* ✅\n\n¿Cómo los prefieres?\n1️⃣ Más *cercanos* a ti\n2️⃣ Mejor *calificados*', saveAs: 'searchMode', capture: 'mode' } },
-    { id: 'cond_mode', type: 'condition', position: { x: 350, y: 720 }, data: {
-      cases: [{ label: 'Más cercanos', logic: 'AND', rules: [{ field: 'vars.searchMode', op: 'equals', value: 'near' }] }] } },
-    { id: 'ask_zip', type: 'ask', position: { x: 110, y: 820 }, data: {
-      text: 'Dame tu *código postal* (5 dígitos) para buscar cerca de ti. 📍', saveAs: 'zip', capture: 'zip' } },
-    { id: 'act_search', type: 'action', position: { x: 390, y: 840 }, data: { action: 'search', params: {} } },
-    { id: 'msg_noresults', type: 'message', position: { x: 720, y: 820 }, data: {
-      text: 'Por ahora no tengo profesionales de *{service}* disponibles 😕.\nPuedes ver a todos aquí: {webProviders}' } },
-    { id: 'act_carousel', type: 'carousel', position: { x: 390, y: 950 }, data: { source: 'results', cards: [] } },
-    { id: 'msg_pick', type: 'message', position: { x: 390, y: 1060 }, data: {
-      text: '👆 Estos son los *{count}* profesionales para *{service}*.\n\nResponde con el *número* (1-{count}) para ver sus *trabajos* y contacto.\n🌐 O velos todos en la web: {webService}\n\nEscribe *otro* para otra búsqueda o *salir* para terminar.' } },
-    { id: 'ask_pick', type: 'ask', position: { x: 390, y: 1170 }, data: { text: '', saveAs: 'pick', capture: 'text' } },
-    { id: 'node_exit', type: 'intent', position: { x: 390, y: 1280 }, data: { intents: ['despedida'] } },
-    { id: 'act_works', type: 'action', position: { x: 390, y: 1390 }, data: { action: 'showWorks', params: {} } },
-    { id: 'end', type: 'end', position: { x: 760, y: 480 }, data: {} },
+    { id: 'start', type: 'start', position: { x: 380, y: -160 }, data: {} },
+    // Menú principal con BOTONES (tocables; si el celular no los muestra, responde 1/2/3)
+    { id: 'menu', type: 'buttons', position: { x: 350, y: -50 }, data: {
+      text: '{greeting} 👋 Soy el asistente de *WhatServices*.\n¿Qué necesitas hoy?',
+      buttons: [
+        { id: 'b_buscar', label: '🔍 Buscar servicio' },
+        { id: 'b_prov', label: '🧰 Ser proveedor' },
+        { id: 'b_todos', label: '📋 Ver todos' },
+      ] } },
+    { id: 'node_intent', type: 'intent', position: { x: 60, y: 40 }, data: { intents: ['saludo', 'ayuda', 'despedida', 'hablar-humano'] } },
+    { id: 'msg_saludo', type: 'message', position: { x: 60, y: 160 }, data: { text: '{greeting}, {firstName}! 😊' } },
+    { id: 'msg_ayuda', type: 'message', position: { x: 60, y: 250 }, data: { text: 'Te ayudo a encontrar profesionales cerca de ti. 🛠️ Elige una opción 👇' } },
+    { id: 'msg_humano', type: 'message', position: { x: 720, y: -60 }, data: { text: '¡Claro! Te paso con un asesor. 🙋 En un momento te contactan.' } },
+    { id: 'msg_despedida', type: 'message', position: { x: 720, y: 40 }, data: { text: '¡Gracias por usar *WhatServices*! 👋 Escríbeme cuando quieras.' } },
+    { id: 'msg_register', type: 'message', position: { x: 720, y: 140 }, data: { text: '¡Genial! 🧰 Regístrate como profesional aquí 👇\n{webRegister}' } },
+    { id: 'msg_allproviders', type: 'message', position: { x: 720, y: 240 }, data: { text: 'Aquí están *todos* los profesionales 👇\n{webProviders}' } },
+    // Búsqueda de servicio
+    { id: 'ask_service', type: 'ask', position: { x: 350, y: 130 }, data: {
+      text: 'Escribe el *servicio* que buscas 🔧\n\n{servicesAvailable}', saveAs: 'serviceText', capture: 'text' } },
+    { id: 'act_match', type: 'action', position: { x: 360, y: 250 }, data: { action: 'matchService', params: {} } },
+    { id: 'msg_noservice', type: 'message', position: { x: 90, y: 350 }, data: { text: 'Mmm, no encontré ese servicio 🤔. Prueba con uno de estos:\n\n{servicesAvailable}' } },
+    // Modo con BOTONES
+    { id: 'mode', type: 'buttons', position: { x: 360, y: 360 }, data: {
+      text: 'Perfecto: *{service}* ✅\n¿Cómo quieres verlos?',
+      buttons: [
+        { id: 'b_near', label: '📍 Más cercanos' },
+        { id: 'b_score', label: '⭐ Mejor calificados' },
+      ] } },
+    { id: 'ask_zip', type: 'ask', position: { x: 110, y: 470 }, data: {
+      text: 'Mándame tu *código postal* (5 dígitos) 📍 para encontrar los más cercanos.', saveAs: 'zip', capture: 'zip' } },
+    { id: 'act_search_near', type: 'action', position: { x: 150, y: 580 }, data: { action: 'search', params: { mode: 'near' } } },
+    { id: 'act_search_score', type: 'action', position: { x: 470, y: 470 }, data: { action: 'search', params: { mode: 'score' } } },
+    { id: 'msg_noresults', type: 'message', position: { x: 740, y: 470 }, data: {
+      text: 'Por ahora no hay profesionales de *{service}* 😕.\nMira a todos aquí: {webProviders}' } },
+    { id: 'act_carousel', type: 'carousel', position: { x: 360, y: 690 }, data: { source: 'results', cards: [] } },
+    { id: 'msg_pick', type: 'message', position: { x: 360, y: 800 }, data: {
+      text: '👆 Te muestro *{count}* profesionales de *{service}*.\n\n👉 Escribe el *número* (1-{count}) para ver sus trabajos y contacto.\n\n_Escribe *menú* para volver o *salir* para terminar._' } },
+    { id: 'ask_pick', type: 'ask', position: { x: 360, y: 910 }, data: { text: '', saveAs: 'pick', capture: 'text' } },
+    { id: 'node_exit', type: 'intent', position: { x: 360, y: 1020 }, data: { intents: ['despedida'] } },
+    { id: 'act_works', type: 'action', position: { x: 360, y: 1130 }, data: { action: 'showWorks', params: {} } },
+    { id: 'end', type: 'end', position: { x: 1000, y: 40 }, data: {} },
   ],
   edges: [
-    { id: 'a1', source: 'start', target: 'ask_inicio' },
-    { id: 'a2', source: 'ask_inicio', target: 'cond_menu' },
-    { id: 'm0', source: 'cond_menu', target: 'msg_register', sourceHandle: 'case-0', label: 'Ser proveedor' },
-    { id: 'm1', source: 'cond_menu', target: 'msg_allproviders', sourceHandle: 'case-1', label: 'Ver todos' },
-    { id: 'm2', source: 'cond_menu', target: 'ask_service', sourceHandle: 'case-2', label: 'Buscar' },
-    { id: 'm3', source: 'cond_menu', target: 'node_intent', sourceHandle: 'else', label: 'Otro' },
-    { id: 'm4', source: 'msg_register', target: 'end' },
-    { id: 'm5', source: 'msg_allproviders', target: 'end' },
-    { id: 'a3', source: 'node_intent', target: 'msg_saludo', sourceHandle: 'intent:saludo', label: 'Saludo' },
-    { id: 'a4', source: 'node_intent', target: 'msg_ayuda', sourceHandle: 'intent:ayuda', label: 'Ayuda' },
-    { id: 'a5', source: 'node_intent', target: 'msg_despedida', sourceHandle: 'intent:despedida', label: 'Despedida' },
-    { id: 'a6', source: 'node_intent', target: 'msg_humano', sourceHandle: 'intent:hablar-humano', label: 'Humano' },
-    { id: 'a7', source: 'node_intent', target: 'act_match', sourceHandle: 'else', label: 'Servicio' },
-    { id: 'a8', source: 'msg_saludo', target: 'ask_service' },
-    { id: 'a9', source: 'msg_ayuda', target: 'ask_service' },
-    { id: 'a10', source: 'msg_humano', target: 'end' },
-    { id: 'a12', source: 'ask_service', target: 'act_match' },
-    { id: 'a13', source: 'act_match', target: 'ask_mode', sourceHandle: 'matched', label: 'Sí reconoció' },
-    { id: 'a14', source: 'act_match', target: 'msg_noservice', sourceHandle: 'notMatched', label: 'No reconoció' },
-    { id: 'a15', source: 'msg_noservice', target: 'ask_service' },
-    { id: 'a16', source: 'ask_mode', target: 'cond_mode' },
-    { id: 'a17', source: 'cond_mode', target: 'ask_zip', sourceHandle: 'case-0', label: 'Cercanos' },
-    { id: 'a18', source: 'cond_mode', target: 'act_search', sourceHandle: 'else', label: 'Mejor calificados' },
-    { id: 'a19', source: 'ask_zip', target: 'act_search' },
-    { id: 'a20', source: 'act_search', target: 'act_carousel', sourceHandle: 'found', label: 'Hay resultados' },
-    { id: 'a21', source: 'act_search', target: 'msg_noresults', sourceHandle: 'empty', label: 'Sin resultados' },
-    { id: 'a22', source: 'msg_noresults', target: 'end' },
-    { id: 'a23', source: 'act_carousel', target: 'msg_pick' },
-    { id: 'a24', source: 'msg_pick', target: 'ask_pick' },
-    { id: 'a25', source: 'ask_pick', target: 'node_exit' },
-    { id: 'a26', source: 'node_exit', target: 'msg_despedida', sourceHandle: 'intent:despedida', label: 'Salir' },
-    { id: 'a27', source: 'node_exit', target: 'act_works', sourceHandle: 'else', label: 'Elegir' },
-    { id: 'a28', source: 'act_works', target: 'ask_pick', sourceHandle: 'shown', label: 'Mostró trabajos' },
-    { id: 'a29', source: 'act_works', target: 'act_carousel', sourceHandle: 'back', label: 'Volver' },
-    { id: 'a30', source: 'act_works', target: 'ask_service', sourceHandle: 'menu', label: 'Otro servicio' },
-    { id: 'a31', source: 'act_works', target: 'ask_pick', sourceHandle: 'none', label: 'No entendió' },
+    { id: 'e1', source: 'start', target: 'menu' },
+    // Menú
+    { id: 'e2', source: 'menu', target: 'ask_service', sourceHandle: 'btn:b_buscar', label: 'Buscar' },
+    { id: 'e3', source: 'menu', target: 'msg_register', sourceHandle: 'btn:b_prov', label: 'Ser proveedor' },
+    { id: 'e4', source: 'menu', target: 'msg_allproviders', sourceHandle: 'btn:b_todos', label: 'Ver todos' },
+    { id: 'e5', source: 'menu', target: 'node_intent', sourceHandle: 'else', label: 'Texto libre' },
+    { id: 'e6', source: 'msg_register', target: 'end' },
+    { id: 'e7', source: 'msg_allproviders', target: 'end' },
+    // Intenciones
+    { id: 'e8', source: 'node_intent', target: 'msg_saludo', sourceHandle: 'intent:saludo', label: 'Saludo' },
+    { id: 'e9', source: 'node_intent', target: 'msg_ayuda', sourceHandle: 'intent:ayuda', label: 'Ayuda' },
+    { id: 'e10', source: 'node_intent', target: 'msg_despedida', sourceHandle: 'intent:despedida', label: 'Despedida' },
+    { id: 'e11', source: 'node_intent', target: 'msg_humano', sourceHandle: 'intent:hablar-humano', label: 'Humano' },
+    { id: 'e12', source: 'node_intent', target: 'act_match', sourceHandle: 'else', label: 'Servicio' },
+    { id: 'e13', source: 'msg_saludo', target: 'menu' },
+    { id: 'e14', source: 'msg_ayuda', target: 'menu' },
+    { id: 'e15', source: 'msg_humano', target: 'end' },
+    // Servicio → modo
+    { id: 'e16', source: 'ask_service', target: 'act_match' },
+    { id: 'e17', source: 'act_match', target: 'mode', sourceHandle: 'matched', label: 'Sí reconoció' },
+    { id: 'e18', source: 'act_match', target: 'msg_noservice', sourceHandle: 'notMatched', label: 'No reconoció' },
+    { id: 'e19', source: 'msg_noservice', target: 'ask_service' },
+    // Modo (botones)
+    { id: 'e20', source: 'mode', target: 'ask_zip', sourceHandle: 'btn:b_near', label: 'Cercanos' },
+    { id: 'e21', source: 'mode', target: 'act_search_score', sourceHandle: 'btn:b_score', label: 'Mejor calificados' },
+    { id: 'e22', source: 'mode', target: 'act_search_score', sourceHandle: 'else', label: 'Por defecto' },
+    { id: 'e23', source: 'ask_zip', target: 'act_search_near' },
+    // Búsqueda → carrusel
+    { id: 'e24', source: 'act_search_near', target: 'act_carousel', sourceHandle: 'found' },
+    { id: 'e25', source: 'act_search_near', target: 'msg_noresults', sourceHandle: 'empty' },
+    { id: 'e26', source: 'act_search_score', target: 'act_carousel', sourceHandle: 'found' },
+    { id: 'e27', source: 'act_search_score', target: 'msg_noresults', sourceHandle: 'empty' },
+    { id: 'e28', source: 'msg_noresults', target: 'menu' },
+    // Resultados → elegir
+    { id: 'e29', source: 'act_carousel', target: 'msg_pick' },
+    { id: 'e30', source: 'msg_pick', target: 'ask_pick' },
+    { id: 'e31', source: 'ask_pick', target: 'node_exit' },
+    { id: 'e32', source: 'node_exit', target: 'msg_despedida', sourceHandle: 'intent:despedida', label: 'Salir' },
+    { id: 'e33', source: 'node_exit', target: 'act_works', sourceHandle: 'else', label: 'Elegir' },
+    { id: 'e34', source: 'act_works', target: 'ask_pick', sourceHandle: 'shown', label: 'Mostró trabajos' },
+    { id: 'e35', source: 'act_works', target: 'act_carousel', sourceHandle: 'back', label: 'Volver' },
+    { id: 'e36', source: 'act_works', target: 'menu', sourceHandle: 'menu', label: 'Menú' },
+    { id: 'e37', source: 'act_works', target: 'ask_pick', sourceHandle: 'none', label: 'No entendió' },
   ],
 })
 
