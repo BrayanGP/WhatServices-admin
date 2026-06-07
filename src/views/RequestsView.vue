@@ -70,7 +70,7 @@ onMounted(load)
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
       <!-- Lista -->
-      <div class="bg-white rounded-xl shadow overflow-hidden lg:col-span-2">
+      <div class="bg-white rounded-xl shadow overflow-x-auto lg:col-span-2">
         <div v-if="loading" class="p-4 text-gray-400 text-sm">Cargando...</div>
         <div v-else-if="!requests.length" class="p-4 text-gray-400 text-sm">Sin solicitudes aún.</div>
         <table v-else class="w-full text-sm">

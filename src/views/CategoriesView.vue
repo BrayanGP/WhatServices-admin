@@ -106,7 +106,7 @@ const review = async (cat, action) => {
         ⏳ Pendientes de aprobación
         <span class="bg-amber-100 text-amber-700 text-xs font-bold px-2 py-0.5 rounded-full">{{ pending.length }}</span>
       </h2>
-      <div class="bg-white rounded-xl shadow overflow-hidden">
+      <div class="bg-white rounded-xl shadow overflow-x-auto">
         <table class="w-full text-sm">
           <thead class="bg-amber-50 text-amber-700 text-xs uppercase">
             <tr>
@@ -146,7 +146,7 @@ const review = async (cat, action) => {
     <!-- Categorías activas / inactivas -->
     <div>
       <h2 class="text-base font-semibold text-gray-700 mb-3">Todas las categorías</h2>
-      <div class="bg-white rounded-xl shadow overflow-hidden">
+      <div class="bg-white rounded-xl shadow overflow-x-auto">
         <table class="w-full text-sm">
           <thead class="bg-gray-50 text-gray-500 text-xs uppercase">
             <tr>

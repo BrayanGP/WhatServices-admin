@@ -21,7 +21,7 @@ const statusClass = (s) => ({
 <template>
   <div class="p-8">
     <h1 class="text-2xl font-bold text-gray-800 mb-6">Suscripciones</h1>
-    <div class="bg-white rounded-xl shadow overflow-hidden">
+    <div class="bg-white rounded-xl shadow overflow-x-auto">
       <table class="w-full text-sm">
         <thead class="bg-gray-50 text-gray-500 text-xs uppercase">
           <tr>
