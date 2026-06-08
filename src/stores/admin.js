@@ -109,6 +109,21 @@ export const useAdminStore = defineStore('admin', () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action }),
     })
+    return res.json() // 409 → { conflict:'providers', providers, category }
+  }
+
+  const deleteCategory = async (id) => {
+    const res = await auth.authFetch(`${API}/admin/categories/${id}`, { method: 'DELETE' })
+    return res.json() // 409 → { conflict:'providers', providers, category }
+  }
+
+  const updateProviderCategories = async (id, categories) => {
+    const res = await auth.authFetch(`${API}/admin/providers/${id}/categories`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ categories }),
+    })
+    if (!res.ok) throw new Error((await res.json()).message || 'Error')
     return res.json()
   }
 
@@ -298,10 +313,10 @@ export const useAdminStore = defineStore('admin', () => {
   }
 
   return {
-    fetchProviders, toggleVerify, toggleBlockProvider, resetProviderPassword,
+    fetchProviders, toggleVerify, toggleBlockProvider, resetProviderPassword, updateProviderCategories,
     fetchUsers, toggleBlockUser, createUser, updateUserRole, resetUserPassword,
     fetchModules, fetchRoles, createRole, updateRole, deleteRole,
-    fetchCategories, createCategory, updateCategory, reviewCategory,
+    fetchCategories, createCategory, updateCategory, reviewCategory, deleteCategory,
     fetchConversations, fetchConversation, toggleTakeover, replyConversation,
     fetchInstances, createInstance, connectInstance, instanceState,
     logoutInstance, deleteInstance, setActiveInstance,

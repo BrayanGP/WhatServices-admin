@@ -1,11 +1,16 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAdminStore } from '../stores/admin'
 
 const store = useAdminStore()
+const router = useRouter()
 const allCategories = ref([])
 const adding = ref(false)
 const newCat = ref({ name: '', icon: '' })
+
+// Modal de conflictos (proveedores que usan una categoría que se intenta rechazar/eliminar)
+const conflict = ref(null) // { message, category, providers, op }
 
 onMounted(async () => { allCategories.value = await store.fetchCategories() })
 
@@ -70,8 +75,21 @@ const saveEdit = async () => {
 }
 
 const review = async (cat, action) => {
-  const updated = await store.reviewCategory(cat._id, action)
-  Object.assign(cat, updated)
+  const result = await store.reviewCategory(cat._id, action)
+  if (result?.conflict === 'providers') { conflict.value = { ...result, op: 'rechazar' }; return }
+  Object.assign(cat, result)
+}
+
+const del = async (cat) => {
+  if (!confirm(`¿Eliminar la categoría "${cat.name}"? Esta acción no se puede deshacer.`)) return
+  const result = await store.deleteCategory(cat._id)
+  if (result?.conflict === 'providers') { conflict.value = { ...result, op: 'eliminar' }; return }
+  if (result?.ok) allCategories.value = allCategories.value.filter((c) => c._id !== cat._id)
+}
+
+// Ir al proveedor en conflicto (abre su popup en la vista Proveedores)
+const goToProvider = (p) => {
+  router.push({ path: '/providers', query: { provider: p._id } })
 }
 </script>
 
@@ -170,20 +188,57 @@ const review = async (cat, action) => {
                   {{ cat.status === 'rejected' ? 'Rechazada' : cat.isActive ? 'Activa' : 'Inactiva' }}
                 </span>
               </td>
-              <td class="px-4 py-3" @click.stop>
+              <td class="px-4 py-3 whitespace-nowrap" @click.stop>
                 <button @click="openEdit(cat)" class="text-xs text-brand-medium hover:underline mr-3">Editar</button>
+                <!-- Rechazada → reactivar -->
                 <button
-                  v-if="cat.status !== 'rejected'"
+                  v-if="cat.status === 'rejected'"
+                  @click="review(cat, 'approve')"
+                  class="text-xs text-green-600 hover:underline mr-3"
+                >Activar</button>
+                <!-- Activa/Inactiva → desactivar/activar -->
+                <button
+                  v-else
                   @click="toggle(cat)"
                   :class="cat.isActive ? 'text-red-500' : 'text-green-600'"
-                  class="text-xs hover:underline"
+                  class="text-xs hover:underline mr-3"
                 >
                   {{ cat.isActive ? 'Desactivar' : 'Activar' }}
                 </button>
+                <button @click="del(cat)" class="text-xs text-red-500 hover:underline">Eliminar</button>
               </td>
             </tr>
           </tbody>
         </table>
+      </div>
+    </div>
+
+    <!-- Modal: conflictos (proveedores usando la categoría) -->
+    <div v-if="conflict" class="fixed inset-0 z-50 bg-black/40 grid place-items-center p-4" @click.self="conflict = null">
+      <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg p-5">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="font-bold text-amber-700 text-lg flex items-center gap-2">⚠ No se puede {{ conflict.op }}</h3>
+          <button @click="conflict = null" class="text-gray-400 hover:text-gray-600">✕</button>
+        </div>
+        <p class="text-sm text-gray-600 mb-4">
+          La categoría <b>{{ conflict.category?.name }}</b> está asignada a
+          <b>{{ conflict.providers?.length }}</b> proveedor(es). Reasígnalos a una categoría válida y luego podrás {{ conflict.op }}la.
+        </p>
+        <div class="space-y-2 max-h-72 overflow-y-auto">
+          <button v-for="p in conflict.providers" :key="p._id" @click="goToProvider(p)"
+            class="w-full flex items-center gap-3 text-left border border-gray-200 rounded-lg p-2.5 hover:border-brand-green hover:bg-brand-light/40 transition">
+            <img v-if="p.profilePhoto?.url" :src="p.profilePhoto.url" class="w-9 h-9 rounded-full object-cover shrink-0" />
+            <div v-else class="w-9 h-9 rounded-full bg-brand-base/15 flex items-center justify-center text-sm font-bold text-brand-medium shrink-0">{{ p.businessName?.[0] }}</div>
+            <div class="min-w-0 flex-1">
+              <p class="text-sm font-medium text-brand-dark truncate">{{ p.businessName }}</p>
+              <p class="text-xs text-gray-400 truncate">{{ p.ownerName || '' }}<span v-if="p.city"> · {{ p.city }}</span></p>
+            </div>
+            <span class="text-xs text-brand-green whitespace-nowrap">Reparar →</span>
+          </button>
+        </div>
+        <div class="flex justify-end pt-4">
+          <button @click="conflict = null" class="px-4 py-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50 text-sm">Cerrar</button>
+        </div>
       </div>
     </div>
 
