@@ -293,7 +293,7 @@ const buscador = () => ({
       ] },
     ] } },
     { id: 'msg_profiles', type: 'message', position: { x: 90, y: 1380 }, data: {
-      text: 'Aquí puedes ver sus perfiles completos y más información 🌐\n\nProfesionales de *{service}*: {webService}\nTodos los profesionales: {webProviders}\n\n👉 También puedes responder con un *número* para ver sus trabajos, o *salir* para terminar.' } },
+      text: 'Aquí puedes ver su perfil completo y más información 🌐\n\n👤 Ver su perfil: {webProfile}\nTodos los profesionales: {webProviders}\n\n👉 También puedes responder con un *número* para ver sus trabajos, o *salir* para terminar.' } },
     { id: 'act_works', type: 'action', position: { x: 390, y: 1390 }, data: { action: 'showWorks', params: {} } },
     { id: 'end', type: 'end', position: { x: 760, y: 480 }, data: {} },
   ],
