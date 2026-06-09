@@ -17,6 +17,22 @@ const tick = ref(0)
 
 const refs = { day: ref(null), services: ref(null) }
 let charts = []
+
+// ----- Analítica del sitio -----
+const anDays = ref(7)
+const overview = ref(null)
+const funnels = ref(null)
+const loadAnalytics = async () => {
+  const [o, f] = await Promise.all([
+    store.fetchAnalyticsOverview(anDays.value),
+    store.fetchAnalyticsFunnel(anDays.value),
+  ])
+  overview.value = o
+  funnels.value = f?.funnels || null
+}
+const setDays = async (d) => { anDays.value = d; await loadAnalytics() }
+const maxOf = (arr, key) => Math.max(1, ...(arr || []).map((x) => x[key] || 0))
+const pct = (v, max) => `${Math.round((v / max) * 100)}%`
 let auto = null
 let ticker = null
 
@@ -74,6 +90,7 @@ const loadData = async () => {
 const refresh = async () => {
   await loadData()
   await loadInbox()
+  await loadAnalytics()
   await nextTick()
   buildCharts()
 }
@@ -106,6 +123,7 @@ const elapsed = (date) => {
 onMounted(async () => {
   await loadData()
   await loadInbox()
+  await loadAnalytics()
   loading.value = false
   await nextTick()
   buildCharts()
@@ -238,6 +256,91 @@ onUnmounted(() => {
         <div class="bg-white rounded-xl shadow p-5">
           <h3 class="font-semibold text-gray-700 mb-3">Servicios más pedidos</h3>
           <div class="h-64"><canvas :ref="refs.services"></canvas></div>
+        </div>
+      </div>
+
+      <!-- ====== Analítica del sitio ====== -->
+      <div class="mt-8" v-if="overview">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-bold text-gray-800">📈 Visitas y conversión</h2>
+          <div class="flex gap-1 text-xs">
+            <button v-for="d in [7, 30, 90]" :key="d" @click="setDays(d)"
+              :class="anDays === d ? 'bg-brand-green text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+              class="px-3 py-1 rounded-full">{{ d }} días</button>
+          </div>
+        </div>
+
+        <!-- Cards -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div class="bg-white rounded-xl shadow p-5">
+            <p class="text-3xl font-bold text-gray-800">{{ overview.pageviews }}</p>
+            <p class="text-sm text-gray-500 mt-1">Visitas (páginas vistas)</p>
+          </div>
+          <div class="bg-white rounded-xl shadow p-5">
+            <p class="text-3xl font-bold text-gray-800">{{ overview.uniques }}</p>
+            <p class="text-sm text-gray-500 mt-1">Visitantes únicos</p>
+          </div>
+          <div class="bg-white rounded-xl shadow p-5">
+            <p class="text-sm text-gray-500 mb-2">Dispositivo</p>
+            <div v-for="d in overview.byDevice" :key="d.device" class="flex justify-between text-sm">
+              <span class="text-gray-600">{{ d.device }}</span><span class="font-medium text-gray-800">{{ d.count }}</span>
+            </div>
+            <p v-if="!overview.byDevice?.length" class="text-gray-400 text-sm">Sin datos</p>
+          </div>
+          <div class="bg-white rounded-xl shadow p-5">
+            <p class="text-sm text-gray-500 mb-2">Fuentes</p>
+            <div v-for="s in overview.topSources.slice(0,4)" :key="s.source" class="flex justify-between text-sm">
+              <span class="text-gray-600 truncate mr-2">{{ s.source }}</span><span class="font-medium text-gray-800">{{ s.count }}</span>
+            </div>
+            <p v-if="!overview.topSources?.length" class="text-gray-400 text-sm">Sin datos</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Visitas por día -->
+          <div class="bg-white rounded-xl shadow p-5 lg:col-span-2">
+            <h3 class="font-semibold text-gray-700 mb-4">Visitas por día</h3>
+            <div v-if="overview.byDay.length" class="flex items-end gap-1 h-40">
+              <div v-for="d in overview.byDay" :key="d.date" class="flex-1 flex flex-col items-center justify-end group">
+                <span class="text-[10px] text-gray-500 mb-1 opacity-0 group-hover:opacity-100">{{ d.views }}</span>
+                <div class="w-full bg-brand-green/80 rounded-t" :style="{ height: pct(d.views, maxOf(overview.byDay, 'views')) }"></div>
+                <span class="text-[9px] text-gray-400 mt-1">{{ d.date.slice(5) }}</span>
+              </div>
+            </div>
+            <p v-else class="text-gray-400 text-sm py-8 text-center">Aún no hay visitas registradas.</p>
+          </div>
+
+          <!-- Top páginas -->
+          <div class="bg-white rounded-xl shadow p-5">
+            <h3 class="font-semibold text-gray-700 mb-4">Páginas más vistas</h3>
+            <div v-for="p in overview.topPaths" :key="p.path" class="mb-2">
+              <div class="flex justify-between text-xs mb-0.5">
+                <span class="text-gray-600 truncate mr-2">{{ p.path }}</span><span class="text-gray-800 font-medium">{{ p.count }}</span>
+              </div>
+              <div class="h-1.5 bg-gray-100 rounded-full"><div class="h-1.5 bg-brand-base rounded-full" :style="{ width: pct(p.count, maxOf(overview.topPaths, 'count')) }"></div></div>
+            </div>
+            <p v-if="!overview.topPaths?.length" class="text-gray-400 text-sm">Sin datos</p>
+          </div>
+        </div>
+
+        <!-- Embudos -->
+        <div v-if="funnels" class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+          <div v-for="(f, id) in funnels" :key="id" class="bg-white rounded-xl shadow p-5">
+            <h3 class="font-semibold text-gray-700 mb-4">Embudo · {{ f.label }}</h3>
+            <div v-for="(s, i) in f.steps" :key="s.key" class="mb-3">
+              <div class="flex justify-between text-sm mb-1">
+                <span class="text-gray-600">{{ i + 1 }}. {{ s.label }}</span>
+                <span class="font-semibold text-gray-800">
+                  {{ s.count }}
+                  <span v-if="i > 0" :class="s.pctFromPrev >= 50 ? 'text-green-600' : 'text-amber-600'" class="text-xs ml-1">({{ s.pctFromPrev }}%)</span>
+                </span>
+              </div>
+              <div class="h-3 bg-gray-100 rounded-full">
+                <div class="h-3 rounded-full bg-brand-green" :style="{ width: pct(s.count, f.steps[0].count || 1) }"></div>
+              </div>
+            </div>
+            <p class="text-[11px] text-gray-400 mt-2">El % indica cuántos pasan del paso anterior (dónde se caen).</p>
+          </div>
         </div>
       </div>
     </template>
