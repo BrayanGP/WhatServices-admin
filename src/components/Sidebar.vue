@@ -17,7 +17,7 @@ const allLinks = [
   { to: '/roles', label: 'Roles', icon: '🛡️', module: 'roles' },
   { to: '/conversations', label: 'Conversaciones', icon: '💬', module: 'conversations' },
   { to: '/requests', label: 'Solicitudes', icon: '📋', module: 'requests' },
-  { to: '/whatsapp', label: 'WhatsApp', icon: '📱', module: 'whatsapp' },
+  // WhatsApp (QR/instancias) retirado: con WhatsApp Cloud API (Meta) no hay QR ni instancias.
   { to: '/bot', label: 'Bot', icon: '🤖', module: 'bot' },
   { to: '/subscriptions', label: 'Suscripciones', icon: '💳', module: 'subscriptions' },
   { to: '/categories', label: 'Categorías', icon: '🗂️', module: 'categories' },
