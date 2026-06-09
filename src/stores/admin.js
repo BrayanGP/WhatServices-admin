@@ -224,6 +224,16 @@ export const useAdminStore = defineStore('admin', () => {
     return res.json()
   }
 
+  // ----- Analítica del sitio -----
+  const fetchAnalyticsOverview = async (days = 7) => {
+    const res = await auth.authFetch(`${API}/admin/analytics/overview?days=${days}`)
+    return res.json()
+  }
+  const fetchAnalyticsFunnel = async (days = 7) => {
+    const res = await auth.authFetch(`${API}/admin/analytics/funnel?days=${days}`)
+    return res.json()
+  }
+
   // ----- Config del bot -----
   const fetchBotConfig = async () => {
     const res = await auth.authFetch(`${API}/admin/bot-config`)
@@ -324,7 +334,7 @@ export const useAdminStore = defineStore('admin', () => {
     fetchIntents, createIntent, updateIntent, deleteIntent, ensureDefaultIntents,
     fetchFlow, saveFlow, publishFlow, unpublishFlow,
     fetchFlowTemplates, createFlowTemplate, deleteFlowTemplate,
-    fetchStats,
+    fetchStats, fetchAnalyticsOverview, fetchAnalyticsFunnel,
     fetchRequests, fetchRequest, updateRequest,
   }
 })
