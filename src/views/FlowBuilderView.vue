@@ -33,6 +33,8 @@ const loading = ref(true)
 const status = ref('')
 const noValueOps = ['exists', 'isTrue', 'isFalse']
 const galleryOpen = ref(false)
+const importOpen = ref(false)
+const importText = ref('')
 const simOpen = ref(false)
 const varsOpen = ref(false)
 const intentsList = ref([])
@@ -169,6 +171,23 @@ const exportJson = () => {
   flash('⬇️ JSON descargado')
 }
 
+// Importar un flujo desde JSON pegado
+const importJson = () => {
+  try {
+    const g = JSON.parse(importText.value)
+    if (!g || !Array.isArray(g.nodes) || !Array.isArray(g.edges)) {
+      flash('JSON inválido: faltan "nodes"/"edges"'); return
+    }
+    applyGraph(g)
+    selectedId.value = null
+    importOpen.value = false
+    importText.value = ''
+    flash('⬆️ Flujo importado · revisa y Publica')
+  } catch (e) {
+    flash('JSON inválido: ' + (e.message || 'no se pudo leer'))
+  }
+}
+
 const save = async () => {
   try { await store.saveFlow(serialize()); flash('💾 Borrador guardado') }
   catch (e) { flash('Error al guardar') }
@@ -249,6 +268,7 @@ const clearAll = () => {
         <button @click="simOpen = true" class="text-sm px-2.5 py-1.5 rounded-lg border border-brand-green text-brand-medium hover:bg-green-50">📱 Probar</button>
         <button @click="galleryOpen = true" class="text-sm px-2.5 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-50">Plantillas</button>
         <button @click="exportJson" class="text-sm px-2.5 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-50">⬇️ JSON</button>
+        <button @click="importOpen = true" class="text-sm px-2.5 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-50">⬆️ Importar</button>
         <button @click="clearAll" class="text-sm px-2.5 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-50">Limpiar</button>
         <button @click="save" class="text-sm px-2.5 py-1.5 rounded-lg bg-brand-medium text-white hover:opacity-90">Guardar</button>
         <button v-if="!isPublished" @click="publish" class="text-sm px-2.5 py-1.5 rounded-lg bg-brand-green text-white hover:bg-brand-lightGreen">Publicar</button>
@@ -531,6 +551,24 @@ const clearAll = () => {
     </div>
 
     <!-- Modal: galería de plantillas -->
+    <!-- Modal: importar JSON -->
+    <div v-if="importOpen" class="fixed inset-0 z-40 bg-black/40 grid place-items-center p-4" @click.self="importOpen = false">
+      <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl p-5">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-bold text-brand-dark text-lg">⬆️ Importar flujo (JSON)</h3>
+          <button @click="importOpen = false" class="text-gray-400 hover:text-gray-600">✕</button>
+        </div>
+        <p class="text-xs text-gray-500 mb-2">Pega el JSON del flujo (con <code>nodes</code> y <code>edges</code>). Reemplaza el lienzo actual; luego revisa y <b>Publica</b>.</p>
+        <textarea v-model="importText" rows="12" spellcheck="false"
+          class="w-full border border-gray-300 rounded-lg p-3 font-mono text-xs focus:border-brand-green outline-none"
+          placeholder='{ "nodes": [...], "edges": [...] }'></textarea>
+        <div class="flex gap-2 justify-end pt-3">
+          <button @click="importOpen = false" class="px-4 py-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50 text-sm">Cancelar</button>
+          <button @click="importJson" class="px-4 py-2 rounded-lg bg-brand-green text-white hover:bg-brand-lightGreen text-sm font-medium">Cargar al lienzo</button>
+        </div>
+      </div>
+    </div>
+
     <div v-if="galleryOpen" class="fixed inset-0 z-40 bg-black/40 grid place-items-center p-4" @click.self="galleryOpen = false">
       <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl p-5 max-h-[85vh] overflow-y-auto">
         <div class="flex items-center justify-between mb-4">
