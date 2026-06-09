@@ -76,6 +76,7 @@ export const ACTIONS = [
   { value: 'matchService', label: 'Reconocer servicio (texto → giro)', outs: ['matched', 'notMatched'] },
   { value: 'search', label: 'Buscar proveedores', outs: ['found', 'empty'], params: ['mode'] },
   { value: 'sendCatalog', label: 'Enviar catálogo (top 5)', outs: ['found', 'empty'] },
+  { value: 'sendServices', label: 'Enviar categorías (lista interactiva)', outs: [] },
   { value: 'startRequest', label: 'Registrar solicitud', outs: [] },
   { value: 'showWorks', label: 'Mostrar trabajos / navegar', outs: ['shown', 'menu', 'back', 'none'] },
 ]
