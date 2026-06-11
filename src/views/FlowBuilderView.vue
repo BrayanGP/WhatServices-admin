@@ -108,6 +108,7 @@ onMounted(async () => {
       store.fetchBotConfig().catch(() => ({})),
     ])
     isPublished.value = !!r.isPublished
+    if (r.name) setFlowName(r.name)
     intentsList.value = ints || []
     customTemplates.value = tpls || []
     customVars.value = (cfg.variables || []).map((v) => ({ key: v.key, value: v.value }))
@@ -192,12 +193,17 @@ const importJson = () => {
   }
 }
 
+// Renombrar el flujo (clic en el chip del nombre)
+const renameFlow = () => {
+  const n = prompt('Nombre del flujo:', currentName.value)
+  if (n && n.trim()) setFlowName(n.trim())
+}
 const save = async () => {
-  try { await store.saveFlow(serialize()); flash('💾 Borrador guardado') }
+  try { const r = await store.saveFlow({ ...serialize(), name: currentName.value }); if (r.name) setFlowName(r.name); flash('💾 Borrador guardado') }
   catch (e) { flash('Error al guardar') }
 }
 const publish = async () => {
-  try { const r = await store.publishFlow(serialize()); isPublished.value = r.isPublished; flash('🚀 Publicado: el bot ya usa este flujo') }
+  try { const r = await store.publishFlow({ ...serialize(), name: currentName.value }); isPublished.value = r.isPublished; if (r.name) setFlowName(r.name); flash('🚀 Publicado: el bot ya usa este flujo') }
   catch (e) { flash(e.message || 'Error al publicar') }
 }
 const unpublish = async () => {
@@ -267,10 +273,11 @@ const clearAll = () => {
         :class="isPublished ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'">
         {{ isPublished ? '● Publicado' : '○ Borrador' }}
       </span>
-      <span class="text-xs px-2 py-1 rounded-full font-semibold bg-brand-green/10 text-brand-medium flex items-center gap-1"
-        title="Plantilla / flujo que estás editando">
-        📄 {{ currentName }}
-      </span>
+      <button @click="renameFlow" type="button"
+        class="text-xs px-2 py-1 rounded-full font-semibold bg-brand-green/10 text-brand-medium flex items-center gap-1 hover:bg-brand-green/20"
+        title="Flujo que estás editando · clic para renombrar">
+        📄 {{ currentName }} <span class="opacity-50">✎</span>
+      </button>
       <span class="text-xs text-gray-500">{{ status }}</span>
 
       <div class="ml-auto flex items-center gap-1.5 flex-wrap justify-end">
