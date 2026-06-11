@@ -31,6 +31,9 @@ const selectedId = ref(null)
 const isPublished = ref(false)
 const loading = ref(true)
 const status = ref('')
+// Nombre de la plantilla/flujo que se está editando (se recuerda entre recargas)
+const currentName = ref(localStorage.getItem('ws_flow_name') || 'Flujo guardado')
+const setFlowName = (n) => { currentName.value = n; try { localStorage.setItem('ws_flow_name', n) } catch (e) {} }
 const noValueOps = ['exists', 'isTrue', 'isFalse']
 const galleryOpen = ref(false)
 const importOpen = ref(false)
@@ -182,6 +185,7 @@ const importJson = () => {
     selectedId.value = null
     importOpen.value = false
     importText.value = ''
+    setFlowName('Importado (sin guardar)')
     flash('⬆️ Flujo importado · revisa y Publica')
   } catch (e) {
     flash('JSON inválido: ' + (e.message || 'no se pudo leer'))
@@ -206,11 +210,13 @@ const pickTemplate = async (t) => {
     try { await store.ensureDefaultIntents(); intentsList.value = await store.fetchIntents().catch(() => intentsList.value) } catch (e) { /* noop */ }
   }
   applyGraph(t.build()); selectedId.value = null; galleryOpen.value = false
+  setFlowName(t.name)
   flash('Plantilla cargada' + (t.ensureIntents ? ' · intenciones creadas' : ''))
 }
 const pickCustom = (t) => {
   if (!confirm(`Cargar la plantilla “${t.name}”. Esto reemplaza el lienzo actual. ¿Continuar?`)) return
   applyGraph(t.graph || { nodes: [], edges: [] }); selectedId.value = null; galleryOpen.value = false
+  setFlowName(t.name)
 }
 const removeCustom = async (t) => {
   if (!confirm(`¿Eliminar la plantilla “${t.name}”?`)) return
@@ -225,6 +231,7 @@ const saveAsTemplate = async () => {
     const g = serialize()
     const tpl = await store.createFlowTemplate({ name: name.trim(), description, icon: '⭐', nodes: g.nodes, edges: g.edges })
     customTemplates.value.unshift(tpl)
+    setFlowName(name.trim())
     flash('⭐ Plantilla guardada')
   } catch (e) { flash(e.message || 'No se pudo guardar la plantilla') }
 }
@@ -247,6 +254,7 @@ const clearAll = () => {
   if (!confirm('Esto borra todos los bloques (deja solo Inicio). ¿Continuar?')) return
   applyGraph({ nodes: [{ id: 'start', type: 'start', position: { x: 320, y: 40 }, data: {} }], edges: [] })
   selectedId.value = null
+  setFlowName('Nuevo (sin guardar)')
 }
 </script>
 
@@ -258,6 +266,10 @@ const clearAll = () => {
       <span class="text-xs px-2 py-1 rounded-full font-medium"
         :class="isPublished ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'">
         {{ isPublished ? '● Publicado' : '○ Borrador' }}
+      </span>
+      <span class="text-xs px-2 py-1 rounded-full font-semibold bg-brand-green/10 text-brand-medium flex items-center gap-1"
+        title="Plantilla / flujo que estás editando">
+        📄 {{ currentName }}
       </span>
       <span class="text-xs text-gray-500">{{ status }}</span>
 
