@@ -13,8 +13,8 @@ const showSidebar = computed(() => auth.isLoggedIn && route.path !== '/login')
 const sidebarOpen = ref(false)
 watch(() => route.path, () => { sidebarOpen.value = false })
 
-// ----- Auto-logout por inactividad (5 minutos) -----
-const IDLE_MS = 5 * 60 * 1000
+// ----- Auto-logout por inactividad (30 minutos) -----
+const IDLE_MS = 30 * 60 * 1000
 let idleTimer = null
 const events = ['mousemove', 'mousedown', 'keydown', 'scroll', 'touchstart', 'click']
 
