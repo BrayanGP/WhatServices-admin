@@ -51,6 +51,17 @@ const askReset = async (p) => {
 
 const copyPass = () => { navigator.clipboard?.writeText(resetResult.value.password); copied.value = true }
 
+const removeProvider = async (p) => {
+  const name = p.businessName || 'este proveedor'
+  if (!confirm(`⚠️ Eliminar DEFINITIVAMENTE a "${name}".\n\nSe borrará su perfil, su cuenta, sus reseñas y todas sus fotos. Esta acción NO se puede deshacer.\n\n¿Continuar?`)) return
+  if (!confirm(`Confirma de nuevo: ¿eliminar "${name}" para siempre?`)) return
+  try {
+    await store.deleteProvider(p._id)
+    providers.value = providers.value.filter((x) => x._id !== p._id)
+    if (selected.value && selected.value._id === p._id) selected.value = null
+  } catch (e) { alert(e.message || 'No se pudo eliminar') }
+}
+
 const email = (p) => p.userId?.email || '—'
 const phone = (p) => p.phone || p.userId?.phone || '—'
 const since = (d) => new Date(d).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' })
@@ -249,6 +260,9 @@ onMounted(async () => {
           </button>
           <button @click="askReset(selected)" :disabled="resetting" class="text-sm border border-amber-400 text-amber-600 px-3 py-1.5 rounded-lg hover:bg-amber-500 hover:text-white transition-colors disabled:opacity-50">
             Reiniciar contraseña
+          </button>
+          <button @click="removeProvider(selected)" class="text-sm border border-red-500 text-red-600 px-3 py-1.5 rounded-lg hover:bg-red-600 hover:text-white transition-colors">
+            🗑️ Eliminar definitivamente
           </button>
         </div>
       </div>
