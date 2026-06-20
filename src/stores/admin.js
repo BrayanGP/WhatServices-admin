@@ -27,6 +27,25 @@ export const useAdminStore = defineStore('admin', () => {
     return res.json()
   }
 
+  const deleteProvider = async (id) => {
+    const res = await auth.authFetch(`${API}/admin/providers/${id}`, { method: 'DELETE' })
+    if (!res.ok) throw new Error((await res.json()).message || 'Error al eliminar')
+    return res.json()
+  }
+
+  // ----- Multimedia -----
+  const fetchMedia = async () => {
+    const res = await auth.authFetch(`${API}/admin/media`)
+    return res.json()
+  }
+  const deleteMedia = async (publicId) => {
+    const res = await auth.authFetch(`${API}/admin/media`, {
+      method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ publicId }),
+    })
+    if (!res.ok) throw new Error((await res.json()).message || 'Error al eliminar')
+    return res.json()
+  }
+
   const fetchUsers = async (params = {}) => {
     const q = new URLSearchParams(params).toString()
     const res = await auth.authFetch(`${API}/admin/users?${q}`)
@@ -323,7 +342,8 @@ export const useAdminStore = defineStore('admin', () => {
   }
 
   return {
-    fetchProviders, toggleVerify, toggleBlockProvider, resetProviderPassword, updateProviderCategories,
+    fetchProviders, toggleVerify, toggleBlockProvider, resetProviderPassword, updateProviderCategories, deleteProvider,
+    fetchMedia, deleteMedia,
     fetchUsers, toggleBlockUser, createUser, updateUserRole, resetUserPassword,
     fetchModules, fetchRoles, createRole, updateRole, deleteRole,
     fetchCategories, createCategory, updateCategory, reviewCategory, deleteCategory,

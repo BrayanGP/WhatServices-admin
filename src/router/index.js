@@ -5,6 +5,7 @@ const routes = [
   { path: '/login', component: () => import('../views/LoginView.vue') },
   { path: '/', component: () => import('../views/DashboardView.vue'), meta: { requiresAuth: true, module: 'dashboard' } },
   { path: '/providers', component: () => import('../views/ProvidersView.vue'), meta: { requiresAuth: true, module: 'providers' } },
+  { path: '/media', component: () => import('../views/MediaView.vue'), meta: { requiresAuth: true, module: 'providers' } },
   { path: '/users', component: () => import('../views/UsersView.vue'), meta: { requiresAuth: true, module: 'users' } },
   { path: '/roles', component: () => import('../views/RolesView.vue'), meta: { requiresAuth: true, module: 'roles' } },
   { path: '/subscriptions', component: () => import('../views/SubscriptionsView.vue'), meta: { requiresAuth: true, module: 'subscriptions' } },

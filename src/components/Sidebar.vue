@@ -13,6 +13,7 @@ const router = useRouter()
 const allLinks = [
   { to: '/', label: 'Dashboard', icon: '📊', module: 'dashboard' },
   { to: '/providers', label: 'Proveedores', icon: '🔧', module: 'providers' },
+  { to: '/media', label: 'Multimedia', icon: '🖼️', module: 'providers' },
   { to: '/users', label: 'Usuarios', icon: '👥', module: 'users' },
   { to: '/roles', label: 'Roles', icon: '🛡️', module: 'roles' },
   { to: '/conversations', label: 'Conversaciones', icon: '💬', module: 'conversations' },
